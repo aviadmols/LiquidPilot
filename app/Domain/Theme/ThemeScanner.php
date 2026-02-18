@@ -74,8 +74,9 @@ class ThemeScanner
     private function normalizeSettings(array $settings): array
     {
         $out = [];
+        $known = ['id', 'type', 'label', 'default', 'options', 'min', 'max', 'step'];
         foreach ($settings as $s) {
-            $out[] = [
+            $normalized = [
                 'id' => $s['id'] ?? null,
                 'type' => $s['type'] ?? 'text',
                 'label' => $s['label'] ?? '',
@@ -85,6 +86,12 @@ class ThemeScanner
                 'max' => $s['max'] ?? null,
                 'step' => $s['step'] ?? null,
             ];
+            foreach ($s as $key => $value) {
+                if (!in_array($key, $known, true)) {
+                    $normalized[$key] = $value;
+                }
+            }
+            $out[] = $normalized;
         }
         return $out;
     }
@@ -92,12 +99,22 @@ class ThemeScanner
     private function normalizeBlocks(array $blocks): array
     {
         $out = [];
+        $known = ['type', 'name', 'settings'];
         foreach ($blocks as $b) {
-            $out[] = [
+            $normalized = [
                 'type' => $b['type'] ?? 'text',
                 'name' => $b['name'] ?? '',
                 'settings' => $this->normalizeSettings($b['settings'] ?? []),
             ];
+            foreach ($b as $key => $value) {
+                if ($key === 'settings') {
+                    continue;
+                }
+                if (!in_array($key, $known, true)) {
+                    $normalized[$key] = $value;
+                }
+            }
+            $out[] = $normalized;
         }
         return $out;
     }

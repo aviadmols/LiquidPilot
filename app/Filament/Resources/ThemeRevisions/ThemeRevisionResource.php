@@ -4,6 +4,8 @@ namespace App\Filament\Resources\ThemeRevisions;
 
 use App\Domain\Theme\ThemeZipService;
 use App\Filament\Resources\ThemeRevisions\Pages\ManageThemeRevisions;
+use App\Filament\Resources\ThemeRevisions\Pages\ViewThemeRevision;
+use App\Filament\Resources\ThemeRevisions\Schemas\ThemeRevisionInfolist;
 use App\Jobs\AnalyzeThemeJob;
 use App\Models\ThemeRevision;
 use BackedEnum;
@@ -11,6 +13,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;

@@ -51,7 +51,9 @@ composer install --no-dev --optimize-autoloader && npm ci && npm run build
 
 **Do not** set the Start Command to `admin:create` or `make:admin-user`. That command asks for a password and will hang the container, causing "Application failed to respond" / 502.
 
-- Leave **Start Command** empty so Railway/Nixpacks uses the default (e.g. `php artisan serve`), or set it explicitly to:
+- In **Railway Dashboard** → your service → **Settings** → **Deploy** (or **Start Command**): **clear the field** or remove `php artisan admin:create ...` so the app uses the repo default.
+- This repo has a [Procfile](Procfile) and [railpack.json](railpack.json) that set the correct start command (`php artisan serve --host=0.0.0.0 --port=...`). If Start Command is empty, Railpack will use them.
+- If you prefer to set it explicitly in Railway, use:
   ```bash
   php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
   ```
@@ -60,7 +62,7 @@ To create an admin user on production, run **once** in Railway → your service 
   ```bash
   php artisan make:admin-user your@email.com --password=YourSecurePassword
   ```
-  Or use `admin:create` with `--password=...`. Without `--password` the command only works in an interactive terminal.
+  Or use `admin:create your@email.com --password=YourPassword`. Do **not** use this as the Start Command.
 
 ## Summary
 
