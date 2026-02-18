@@ -33,7 +33,12 @@ class ThemeRevisionResource extends Resource
                 Section::make()->schema([
                     FileUpload::make('zip_file')
                         ->label('Theme ZIP')
-                        ->acceptedFileTypes(['application/zip'])
+                        ->acceptedFileTypes([
+                            'application/zip',
+                            'application/x-zip',
+                            'application/x-zip-compressed',
+                            'application/octet-stream',
+                        ])
                         ->maxSize(config('theme.zip_max_size_bytes', 100 * 1024 * 1024))
                         ->required()
                         ->storeFiles(false),

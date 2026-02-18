@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('make:admin-user {email} {--password=} {--name=Admin}', function () {
+$createAdminClosure = function () {
     $email = $this->argument('email');
     $name = $this->option('name') ?: 'Admin';
     $password = $this->option('password') ?? $this->secret('Password (min 8 characters)');
@@ -28,4 +28,10 @@ Artisan::command('make:admin-user {email} {--password=} {--name=Admin}', functio
     ]);
     $this->info("Admin created: {$email}");
     return 0;
-})->purpose('Create an admin user for Filament (e.g. on production)');
+};
+
+Artisan::command('make:admin-user {email} {--password=} {--name=Admin}', $createAdminClosure)
+    ->purpose('Create an admin user for Filament (e.g. on production)');
+
+Artisan::command('admin:create {email} {--password=} {--name=Admin}', $createAdminClosure)
+    ->purpose('Create an admin user (alias for make:admin-user)');
