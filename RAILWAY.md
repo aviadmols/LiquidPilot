@@ -47,10 +47,26 @@ composer install --no-dev --optimize-autoloader && npm ci && npm run build
 
 (Otherwise Nixpacks will run `composer install`.)
 
+## 5. Start Command (important – 502 fix)
+
+**Do not** set the Start Command to `admin:create` or `make:admin-user`. That command asks for a password and will hang the container, causing "Application failed to respond" / 502.
+
+- Leave **Start Command** empty so Railway/Nixpacks uses the default (e.g. `php artisan serve`), or set it explicitly to:
+  ```bash
+  php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+  ```
+
+To create an admin user on production, run **once** in Railway → your service → **Shell** (or a one-off run):
+  ```bash
+  php artisan make:admin-user your@email.com --password=YourSecurePassword
+  ```
+  Or use `admin:create` with `--password=...`. Without `--password` the command only works in an interactive terminal.
+
 ## Summary
 
 - **Database**: Postgres/MySQL as a Service, variables `DB_CONNECTION` and `DB_URL`.
 - **Pre-Deploy**: `chmod +x ./railway/init-app.sh && ./railway/init-app.sh`
+- **Start Command**: Leave empty or use `php artisan serve --host=0.0.0.0 --port=${PORT:-8080}`. Never use `admin:create` as the start command.
 - **Variables**: `APP_KEY`, `APP_URL`, `APP_ENV`, `LOG_CHANNEL`, and DB connection.
 
 After the first deploy, the database will be migrated and seeded and the app will be up.

@@ -12,7 +12,14 @@ Artisan::command('inspire', function () {
 $createAdminClosure = function () {
     $email = $this->argument('email');
     $name = $this->option('name') ?: 'Admin';
-    $password = $this->option('password') ?? $this->secret('Password (min 8 characters)');
+    $password = $this->option('password');
+    if ($password === null || $password === '') {
+        if (!$this->input->isInteractive() || !stream_isatty(STDIN)) {
+            $this->error('Run with --password=YourPassword (required when not interactive, e.g. on Railway). Do NOT use this command as the app start command.');
+            return 1;
+        }
+        $password = $this->secret('Password (min 8 characters)');
+    }
     if (strlen($password) < 8) {
         $this->error('Password must be at least 8 characters.');
         return 1;
