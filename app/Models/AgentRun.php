@@ -19,8 +19,12 @@ class AgentRun extends Model
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_FAILED = 'failed';
 
+    public const IMAGE_GENERATOR_PLACEHOLDER = 'placeholder';
+    public const IMAGE_GENERATOR_NANOBANNA = 'nanobanna';
+
     protected $fillable = [
         'project_id', 'theme_revision_id', 'mode', 'selected_section_handle', 'output_format', 'creative_brief',
+        'image_generator', 'max_images_per_run',
         'status', 'progress', 'started_at', 'finished_at', 'error',
     ];
 

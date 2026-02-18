@@ -23,6 +23,7 @@ class CreateThemeRevision extends CreateRecord
         $data['original_filename'] = is_array($file) ? (basename($file[0] ?? 'theme.zip')) : 'theme.zip';
         $data['zip_path'] = '';
         $data['status'] = 'pending';
+        $data['project_id'] = null;
         return $data;
     }
 

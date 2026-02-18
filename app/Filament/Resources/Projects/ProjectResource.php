@@ -60,6 +60,16 @@ class ProjectResource extends Resource
                     ->label('Full Run')
                     ->icon('heroicon-o-play')
                     ->form([
+                        Select::make('theme_revision_id')
+                            ->label('Template / Theme revision')
+                            ->options(
+                                ThemeRevision::where('status', 'ready')
+                                    ->orderByDesc('scanned_at')
+                                    ->get()
+                                    ->mapWithKeys(fn ($r) => [$r->id => $r->original_filename . ' (#' . $r->id . ')'])
+                            )
+                            ->required()
+                            ->searchable(),
                         Select::make('output_format')
                             ->label('Output / Deliverables')
                             ->options([
@@ -68,6 +78,19 @@ class ProjectResource extends Resource
                                 \App\Models\AgentRun::OUTPUT_BOTH => 'All (ZIP + JSON + media)',
                             ])
                             ->default(\App\Models\AgentRun::OUTPUT_FULL_ZIP),
+                        Select::make('image_generator')
+                            ->label('Image generator')
+                            ->options([
+                                \App\Models\AgentRun::IMAGE_GENERATOR_PLACEHOLDER => 'Placeholder (local)',
+                                \App\Models\AgentRun::IMAGE_GENERATOR_NANOBANNA => 'NanoBanana (AI)',
+                            ])
+                            ->default(\App\Models\AgentRun::IMAGE_GENERATOR_PLACEHOLDER),
+                        TextInput::make('max_images_per_run')
+                            ->label('Max images per run (optional)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->placeholder('No limit')
+                            ->helperText('Only this many images will be generated; the rest will reuse them.'),
                         Textarea::make('creative_brief')
                             ->label('Creative brief / Additional instructions')
                             ->placeholder('e.g. Minimal homepage, focus on large product images, short headlines')
@@ -75,17 +98,14 @@ class ProjectResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->action(function (Project $record, array $data) {
-                        $revision = ThemeRevision::where('project_id', $record->id)->where('status', 'ready')->latest()->first();
-                        if (!$revision) {
-                            Notification::make()->title('No ready theme revision')->danger()->send();
-                            return;
-                        }
                         $run = \App\Models\AgentRun::create([
                             'project_id' => $record->id,
-                            'theme_revision_id' => $revision->id,
+                            'theme_revision_id' => $data['theme_revision_id'],
                             'mode' => \App\Models\AgentRun::MODE_FULL,
                             'output_format' => $data['output_format'] ?? \App\Models\AgentRun::OUTPUT_FULL_ZIP,
                             'creative_brief' => $data['creative_brief'] ?? null,
+                            'image_generator' => $data['image_generator'] ?? \App\Models\AgentRun::IMAGE_GENERATOR_PLACEHOLDER,
+                            'max_images_per_run' => isset($data['max_images_per_run']) && $data['max_images_per_run'] !== '' ? (int) $data['max_images_per_run'] : null,
                             'status' => \App\Models\AgentRun::STATUS_PENDING,
                         ]);
                         \App\Jobs\SummarizeCatalogJob::dispatch($run->id);
@@ -96,7 +116,24 @@ class ProjectResource extends Resource
                     ->label('Test Run')
                     ->icon('heroicon-o-beaker')
                     ->form([
-                        Select::make('section_handle')->label('Section')->options(fn (Project $record) => \App\Models\ThemeSection::whereHas('themeRevision', fn (Builder $q) => $q->where('project_id', $record->id))->pluck('handle', 'handle'))->required(),
+                        Select::make('theme_revision_id')
+                            ->label('Template / Theme revision')
+                            ->options(
+                                ThemeRevision::where('status', 'ready')
+                                    ->orderByDesc('scanned_at')
+                                    ->get()
+                                    ->mapWithKeys(fn ($r) => [$r->id => $r->original_filename . ' (#' . $r->id . ')'])
+                            )
+                            ->required()
+                            ->searchable()
+                            ->live(),
+                        Select::make('section_handle')
+                            ->label('Section')
+                            ->options(fn ($get) => $get('theme_revision_id')
+                                ? \App\Models\ThemeSection::where('theme_revision_id', $get('theme_revision_id'))->pluck('handle', 'handle')
+                                : [])
+                            ->required()
+                            ->disabled(fn ($get) => ! $get('theme_revision_id')),
                         Select::make('output_format')
                             ->label('Output / Deliverables')
                             ->options([
@@ -105,6 +142,19 @@ class ProjectResource extends Resource
                                 \App\Models\AgentRun::OUTPUT_BOTH => 'All (ZIP + JSON + media)',
                             ])
                             ->default(\App\Models\AgentRun::OUTPUT_FULL_ZIP),
+                        Select::make('image_generator')
+                            ->label('Image generator')
+                            ->options([
+                                \App\Models\AgentRun::IMAGE_GENERATOR_PLACEHOLDER => 'Placeholder (local)',
+                                \App\Models\AgentRun::IMAGE_GENERATOR_NANOBANNA => 'NanoBanana (AI)',
+                            ])
+                            ->default(\App\Models\AgentRun::IMAGE_GENERATOR_PLACEHOLDER),
+                        TextInput::make('max_images_per_run')
+                            ->label('Max images per run (optional)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->placeholder('No limit')
+                            ->helperText('Only this many images will be generated; the rest will reuse them.'),
                         Textarea::make('creative_brief')
                             ->label('Creative brief / Additional instructions')
                             ->placeholder('e.g. Minimal homepage, focus on large product images')
@@ -112,18 +162,15 @@ class ProjectResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->action(function (Project $record, array $data) {
-                        $revision = ThemeRevision::where('project_id', $record->id)->where('status', 'ready')->latest()->first();
-                        if (!$revision) {
-                            Notification::make()->title('No ready theme revision')->danger()->send();
-                            return;
-                        }
                         $run = \App\Models\AgentRun::create([
                             'project_id' => $record->id,
-                            'theme_revision_id' => $revision->id,
+                            'theme_revision_id' => $data['theme_revision_id'],
                             'mode' => \App\Models\AgentRun::MODE_TEST,
                             'selected_section_handle' => $data['section_handle'],
                             'output_format' => $data['output_format'] ?? \App\Models\AgentRun::OUTPUT_FULL_ZIP,
                             'creative_brief' => $data['creative_brief'] ?? null,
+                            'image_generator' => $data['image_generator'] ?? \App\Models\AgentRun::IMAGE_GENERATOR_PLACEHOLDER,
+                            'max_images_per_run' => isset($data['max_images_per_run']) && $data['max_images_per_run'] !== '' ? (int) $data['max_images_per_run'] : null,
                             'status' => \App\Models\AgentRun::STATUS_PENDING,
                         ]);
                         \App\Jobs\SummarizeCatalogJob::dispatch($run->id);

@@ -1,56 +1,56 @@
-# Railway – התקנה והפעלה
+# Railway – Setup and run
 
-כשהפרויקט נטען ב-Railway, הגדר את הדברים הבאים כדי שהמסד והאפליקציה יעבדו אוטומטית.
+When the project is deployed on Railway, configure the following so the database and app run correctly.
 
-## 1. הוספת מסד נתונים (Postgres או MySQL)
+## 1. Add a database (Postgres or MySQL)
 
-- ב-Railway: **New** → **Database** → **Postgres** (או MySQL).
-- Railway ייצור משתנה `DATABASE_URL` (או Postgres מספק `DATABASE_URL`).
+- In Railway: **New** → **Database** → **Postgres** (or MySQL).
+- Railway will set the `DATABASE_URL` variable (or Postgres provides `DATABASE_URL`).
 
-## 2. משתני סביבה (Variables)
+## 2. Environment variables
 
-ב-**Variables** של השירות של האפליקציה הוסף לפחות:
+In the app service **Variables**, add at least:
 
-| משתנה        | ערך / הערה |
-|-------------|------------|
-| `APP_KEY`   | הרץ מקומית `php artisan key:generate` והדבק את הערך, או השאר ריק והסקריפט ייצור בהפעלה הראשונה. |
-| `APP_ENV`   | `production` |
+| Variable | Value / note |
+|----------|--------------|
+| `APP_KEY` | Run locally `php artisan key:generate` and paste the value, or leave empty and the init script will generate it on first run. |
+| `APP_ENV` | `production` |
 | `APP_DEBUG` | `false` |
-| `APP_URL`   | ה-URL ש-Railway נותן (למשל `https://xxx.railway.app`) |
-| `DB_CONNECTION` | `pgsql` (אם השתמשת ב-Postgres) או `mysql` |
-| `DB_URL`    | אם הוספת Postgres: `${{Postgres.DATABASE_URL}}` (הפניה למשתנה של שירות ה-DB). אם MySQL: כתובת ה-URL שמספק שירות MySQL. |
-| `LOG_CHANNEL` | `stderr` (מומלץ ב-Railway) |
+| `APP_URL` | The URL Railway gives (e.g. `https://xxx.railway.app`) |
+| `DB_CONNECTION` | `pgsql` (if using Postgres) or `mysql` |
+| `DB_URL` | If you added Postgres: `${{Postgres.DATABASE_URL}}` (reference to the DB service variable). For MySQL: the URL provided by the MySQL service. |
+| `LOG_CHANNEL` | `stderr` (recommended on Railway) |
 
-## 3. פקודת Pre-Deploy (התקנת DB ו-seed)
+## 3. Pre-Deploy command (DB setup and seed)
 
-ב-**Settings** → **Deploy** → **Pre-Deploy Command** הזן:
+In **Settings** → **Deploy** → **Pre-Deploy Command** enter:
 
 ```bash
 chmod +x ./railway/init-app.sh && ./railway/init-app.sh
 ```
 
-זה יריץ בכל דיפלוי:
+This runs on every deploy:
 
 - `php artisan migrate --force`
 - `php artisan db:seed --force`
-- ואם אין `APP_KEY` – יצירת מפתח.
+- If `APP_KEY` is missing, it will be generated.
 
-אחרי השמירה, Railway יריץ את הפקודה ואז יעלה את האפליקציה.
+After saving, Railway will run this command and then start the app.
 
-## 4. Build (אם צריך)
+## 4. Build (if needed)
 
-אם יש לך frontend (Vite וכו') – ב-**Build** אפשר להוסיף **Custom Build Command**:
+If you have a frontend (Vite etc.) – in **Build** you can set **Custom Build Command**:
 
 ```bash
 composer install --no-dev --optimize-autoloader && npm ci && npm run build
 ```
 
-(אחרת Nixpacks כבר יריץ `composer install`.)
+(Otherwise Nixpacks will run `composer install`.)
 
-## סיכום
+## Summary
 
-- **מסד**: Postgres/MySQL כ־Service, משתנים `DB_CONNECTION` ו־`DB_URL`.
+- **Database**: Postgres/MySQL as a Service, variables `DB_CONNECTION` and `DB_URL`.
 - **Pre-Deploy**: `chmod +x ./railway/init-app.sh && ./railway/init-app.sh`
-- **Variables**: `APP_KEY`, `APP_URL`, `APP_ENV`, `LOG_CHANNEL`, וחיבור ל-DB.
+- **Variables**: `APP_KEY`, `APP_URL`, `APP_ENV`, `LOG_CHANNEL`, and DB connection.
 
-לאחר הדיפלוי הראשון, המסד יהיה מותקן (migrate + seed) והאפליקציה תעלה.
+After the first deploy, the database will be migrated and seeded and the app will be up.

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\AgentRun;
 use App\Models\AgentStep;
+use App\Models\BrandKit;
 use App\Models\Export;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,7 +25,7 @@ class ExportThemeJob implements ShouldQueue
     {
         $run = AgentRun::findOrFail($this->agentRunId);
         $extractedPath = $run->themeRevision->extracted_path;
-        $composeStep = AgentStep::where('agent_run_id', $run->id)->where('step_key', 'compose')->first();
+        $composeStep = AgentStep::where('agent_run_id', $run->id)->where('step_key', 'compose')->latest('id')->first();
         $indexJson = $composeStep?->output_json ?? ['sections' => [], 'order' => []];
 
         $templatesDir = $extractedPath . DIRECTORY_SEPARATOR . 'templates';
@@ -48,6 +49,20 @@ class ExportThemeJob implements ShouldQueue
             $zygDir . DIRECTORY_SEPARATOR . config('theme.zyg_generated_manifest_filename', 'generated_manifest.json'),
             json_encode($manifest, JSON_PRETTY_PRINT)
         );
+
+        $brand = BrandKit::where('project_id', $run->project_id)->first();
+        if ($brand?->logo_path) {
+            $logoFullPath = Storage::disk('public')->path($brand->logo_path);
+            if (is_file($logoFullPath)) {
+                $assetsDir = $extractedPath . DIRECTORY_SEPARATOR . 'assets';
+                if (!is_dir($assetsDir)) {
+                    mkdir($assetsDir, 0755, true);
+                }
+                $ext = pathinfo($logoFullPath, PATHINFO_EXTENSION) ?: 'png';
+                $destLogo = $assetsDir . DIRECTORY_SEPARATOR . 'logo.' . $ext;
+                copy($logoFullPath, $destLogo);
+            }
+        }
 
         $exportDir = Storage::disk('local')->path('exports');
         if (!is_dir($exportDir)) {

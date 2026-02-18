@@ -20,7 +20,7 @@ class ComposeSectionsJob implements ShouldQueue
     public function handle(AgentRunner $runner): void
     {
         $run = AgentRun::findOrFail($this->agentRunId);
-        $planStep = AgentStep::where('agent_run_id', $run->id)->where('step_key', 'plan')->first();
+        $planStep = AgentStep::where('agent_run_id', $run->id)->where('step_key', 'plan')->latest('id')->first();
         $plan = $planStep?->output_json ?? ['sections' => []];
         if ($run->mode === AgentRun::MODE_TEST && $run->selected_section_handle) {
             $plan = ['sections' => [$run->selected_section_handle]];

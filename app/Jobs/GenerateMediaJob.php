@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Domain\Media\MediaGenerator;
+use App\Domain\Media\NanobannaImageGenerator;
 use App\Models\AgentRun;
 use App\Models\BrandKit;
 use App\Models\MediaAsset;
@@ -19,7 +20,7 @@ class GenerateMediaJob implements ShouldQueue
 
     public function __construct(public int $agentRunId) {}
 
-    public function handle(MediaGenerator $generator): void
+    public function handle(MediaGenerator $placeholderGenerator): void
     {
         $run = AgentRun::findOrFail($this->agentRunId);
         $extractedPath = $run->themeRevision->extracted_path;
@@ -30,20 +31,47 @@ class GenerateMediaJob implements ShouldQueue
             $data = json_decode(File::get($manifestPath), true);
             $required = $data['assets'] ?? [];
         }
+
+        $generator = $run->image_generator === AgentRun::IMAGE_GENERATOR_NANOBANNA
+            ? new NanobannaImageGenerator()
+            : $placeholderGenerator;
+
+        $maxGenerate = $run->max_images_per_run !== null
+            ? min($run->max_images_per_run, count($required))
+            : count($required);
+
         $brand = BrandKit::where('project_id', $run->project_id)->first();
         $colors = $brand?->colors_json ?? ['primary' => '#4F46E5', 'secondary' => '#7C3AED'];
         $imageryVibe = $this->imageryStyleLabel($brand);
+
+        $generatedRelPaths = [];
+        $assetsDir = $extractedPath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'generated';
+
         foreach ($required as $i => $asset) {
             $purpose = $asset['purpose'] ?? 'asset_' . $i;
             $width = $asset['width'] ?? 1200;
             $height = $asset['height'] ?? 800;
             $label = $imageryVibe ? $purpose . ' – ' . $imageryVibe : $purpose;
             $filename = $purpose . '.png';
-            $relPath = $generator->generate($extractedPath, $filename, $width, $height, $colors, $label);
+
+            if ($i < $maxGenerate) {
+                $relPath = $generator->generate($extractedPath, $filename, $width, $height, $colors, $label);
+                $generatedRelPaths[] = str_replace('\\', '/', $relPath);
+            } else {
+                $reuseIndex = $i % $maxGenerate;
+                $sourceRelPath = $generatedRelPaths[$reuseIndex];
+                $sourceFull = $extractedPath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $sourceRelPath);
+                $destFull = $assetsDir . DIRECTORY_SEPARATOR . $filename;
+                if (is_file($sourceFull)) {
+                    @copy($sourceFull, $destFull);
+                }
+                $relPath = 'assets/generated/' . $filename;
+            }
+
             MediaAsset::create([
                 'agent_run_id' => $run->id,
                 'filename' => $filename,
-                'rel_path' => str_replace('\\', '/', $relPath),
+                'rel_path' => $relPath,
                 'width' => $width,
                 'height' => $height,
                 'mime' => 'image/png',
@@ -51,6 +79,7 @@ class GenerateMediaJob implements ShouldQueue
                 'status' => 'ready',
             ]);
         }
+
         $run->update(['progress' => 75]);
         ExportThemeJob::dispatch($this->agentRunId);
     }

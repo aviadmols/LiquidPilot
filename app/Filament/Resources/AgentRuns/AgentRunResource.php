@@ -40,7 +40,8 @@ class AgentRunResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\AgentRuns\RelationManagers\AgentStepsRelationManager::class,
+            \App\Filament\Resources\AgentRuns\RelationManagers\MediaAssetsRelationManager::class,
         ];
     }
 

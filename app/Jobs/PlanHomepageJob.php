@@ -19,7 +19,7 @@ class PlanHomepageJob implements ShouldQueue
     public function handle(AgentRunner $runner): void
     {
         $run = AgentRun::findOrFail($this->agentRunId);
-        $summaryStep = \App\Models\AgentStep::where('agent_run_id', $run->id)->where('step_key', 'summary')->first();
+        $summaryStep = \App\Models\AgentStep::where('agent_run_id', $run->id)->where('step_key', 'summary')->latest('id')->first();
         $summary = $summaryStep?->output_json ?? [];
         $runner->runPlan($run, $summary);
         ComposeSectionsJob::dispatch($this->agentRunId);

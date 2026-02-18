@@ -45,4 +45,13 @@ return [
         'locales/*.json',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | NanoBanana image generation (optional)
+    |--------------------------------------------------------------------------
+    */
+
+    'nanobanna_base_url' => env('NANOBANNA_BASE_URL', 'https://api.nanobananaapi.ai'),
+    'nanobanna_api_key' => env('NANOBANNA_API_KEY'),
+
 ];

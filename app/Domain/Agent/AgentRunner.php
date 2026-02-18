@@ -6,6 +6,7 @@ use App\Models\AgentRun;
 use App\Models\AgentStep;
 use App\Models\BrandKit;
 use App\Models\ProjectSecret;
+use App\Models\Setting;
 use App\Models\ThemeCatalog;
 use App\Models\ThemeRevision;
 use App\Models\ThemeSection;
@@ -238,6 +239,10 @@ class AgentRunner
     private function getApiKey(int $projectId): ?string
     {
         $secret = ProjectSecret::where('project_id', $projectId)->where('key', 'openrouter_api_key')->first();
-        return $secret ? $secret->getDecryptedValue() : null;
+        $key = $secret ? $secret->getDecryptedValue() : null;
+        if ($key !== null && $key !== '') {
+            return $key;
+        }
+        return Setting::getValue('openrouter_api_key');
     }
 }

@@ -18,6 +18,8 @@ class AgentRunInfolist
                     TextEntry::make('themeRevision.original_filename')->label('Theme'),
                     TextEntry::make('mode'),
                     TextEntry::make('output_format')->label('Output'),
+                    TextEntry::make('image_generator')->label('Image generator'),
+                    TextEntry::make('max_images_per_run')->label('Max images'),
                     TextEntry::make('status'),
                     TextEntry::make('progress')->suffix('%'),
                     TextEntry::make('started_at')->dateTime(),

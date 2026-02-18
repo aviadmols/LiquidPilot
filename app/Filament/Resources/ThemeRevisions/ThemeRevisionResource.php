@@ -12,7 +12,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -32,7 +31,6 @@ class ThemeRevisionResource extends Resource
         return $schema
             ->components([
                 Section::make()->schema([
-                    Select::make('project_id')->relationship('project', 'name')->required(),
                     FileUpload::make('zip_file')
                         ->label('Theme ZIP')
                         ->acceptedFileTypes(['application/zip'])
@@ -47,7 +45,7 @@ class ThemeRevisionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('project.name'),
+                TextColumn::make('project.name')->label('Project')->placeholder('-'),
                 TextColumn::make('original_filename'),
                 TextColumn::make('status')->badge(),
                 TextColumn::make('signature_sha256')->limit(12),

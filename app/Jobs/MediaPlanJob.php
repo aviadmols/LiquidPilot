@@ -20,7 +20,7 @@ class MediaPlanJob implements ShouldQueue
     public function handle(MediaPlanner $planner): void
     {
         $run = AgentRun::findOrFail($this->agentRunId);
-        $composeStep = AgentStep::where('agent_run_id', $run->id)->where('step_key', 'compose')->first();
+        $composeStep = AgentStep::where('agent_run_id', $run->id)->where('step_key', 'compose')->latest('id')->first();
         $indexJson = $composeStep?->output_json ?? [];
         $extractedPath = $run->themeRevision->extracted_path;
         if (!$extractedPath || !is_dir($extractedPath)) {

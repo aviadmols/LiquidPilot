@@ -47,7 +47,7 @@ class PromptTemplateResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('key')->searchable(),
-                TextColumn::make('default_model_name')->label('Default module')->placeholder('—'),
+                TextColumn::make('default_model_name')->label('Default module')->placeholder('-'),
                 TextColumn::make('version'),
                 TextColumn::make('is_active')->badge(),
             ])
