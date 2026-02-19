@@ -11,10 +11,15 @@ When the project is deployed on Railway, configure the following so the database
 **Fix:** In Railway → your **service** → **Settings** → **Deploy** (or **Start**):
 
 1. Find the **"Start Command"** / **"Custom Start Command"** field.
-2. **Clear it completely** (leave empty) so Railway uses the Procfile, **or** set it exactly to:
+2. Set it **exactly** to one of these (copy-paste, do not add anything else):
+   ```bash
+   sh start.sh
+   ```
+   Or:
    ```bash
    php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
    ```
+   If the field is empty, Railway may use the Procfile; if the app still crashes, use `sh start.sh` explicitly.
 3. Save and **Redeploy**. The app will then start the HTTP server instead of the admin-creation command.
 
 ---
@@ -68,12 +73,8 @@ composer install --no-dev --optimize-autoloader && npm ci && npm run build
 
 **Do not** set the Start Command to `admin:create` or `make:admin-user`. That command asks for a password and will hang the container, causing "Application failed to respond" / 502.
 
-- In **Railway Dashboard** → your service → **Settings** → **Deploy** (or **Start Command**): **clear the field** or remove `php artisan admin:create ...` so the app uses the repo default.
-- This repo has a [Procfile](Procfile) and [railpack.json](railpack.json) that set the correct start command (`php artisan serve --host=0.0.0.0 --port=...`). If Start Command is empty, Railpack will use them.
-- If you prefer to set it explicitly in Railway, use:
-  ```bash
-  php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
-  ```
+- In **Railway Dashboard** → your service → **Settings** → **Deploy** → **Start Command**: set **exactly** to `sh start.sh` or to `php artisan serve --host=0.0.0.0 --port=${PORT:-8080}`. Do **not** leave here `admin:create` or `make:admin-user`.
+- This repo has [start.sh](start.sh) (run with `sh start.sh`), a [Procfile](Procfile), and [railpack.json](railpack.json). If your app keeps crashing, set Start Command to `sh start.sh` explicitly.
 
 To create an admin user on production, run **once** in Railway → your service → **Shell** (or a one-off run):
   ```bash
@@ -85,7 +86,7 @@ To create an admin user on production, run **once** in Railway → your service 
 
 - **Database**: Postgres/MySQL as a Service, variables `DB_CONNECTION` and `DB_URL`.
 - **Pre-Deploy**: `chmod +x ./railway/init-app.sh && ./railway/init-app.sh`
-- **Start Command**: Leave empty or use `php artisan serve --host=0.0.0.0 --port=${PORT:-8080}`. Never use `admin:create` as the start command.
+- **Start Command**: Set to `sh start.sh` or `php artisan serve --host=0.0.0.0 --port=${PORT:-8080}`. Never use `admin:create` or `make:admin-user`.
 - **Variables**: `APP_KEY`, `APP_URL`, `APP_ENV`, `LOG_CHANNEL`, and DB connection.
 
 After the first deploy, the database will be migrated and seeded and the app will be up.
