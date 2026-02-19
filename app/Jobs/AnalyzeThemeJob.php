@@ -38,8 +38,15 @@ class AnalyzeThemeJob implements ShouldQueue
         try {
             $revision->appendAnalysisStep('start', 'Analysis started.');
 
+            if (empty($revision->zip_path) || ! is_string($revision->zip_path)) {
+                throw new \RuntimeException('No theme ZIP uploaded. Upload a ZIP file when creating the Theme Revision (or on Edit) and run the scan again.');
+            }
+
             $zipService = ThemeZipService::fromConfig();
             $zipPath = $zipService->fullPath($revision->zip_path);
+            if (! is_file($zipPath)) {
+                throw new \RuntimeException('Theme ZIP file not found at: ' . $revision->zip_path . '. Re-upload the ZIP and run the scan again.');
+            }
             $extractBase = dirname($zipPath);
             $extractedPath = $extractBase . DIRECTORY_SEPARATOR . 'extracted';
             if (!is_dir($extractedPath)) {

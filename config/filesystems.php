@@ -32,7 +32,8 @@ return [
 
         'local' => [
             'driver' => 'local',
-            'root' => storage_path('app/private'),
+            // On Railway set STORAGE_APP_PATH=/files/media and mount liquidpilot-volume at /files/media so uploads (theme ZIPs, exports, media) persist.
+            'root' => env('STORAGE_APP_PATH', storage_path('app/private')),
             'serve' => true,
             'throw' => false,
             'report' => false,

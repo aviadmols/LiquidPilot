@@ -47,6 +47,15 @@ In the app service **Variables**, add at least:
 | `DATABASE_URL` or `DB_URL` | **Required for production.** From linked Postgres (e.g. reference `${{Postgres.DATABASE_URL}}` in the app’s Variables). |
 | `DATABASE_PUBLIC_URL` | From linked Postgres (e.g. `${{Postgres.DATABASE_PUBLIC_URL}}`). **Required for pre-deploy:** the init script uses it when `DATABASE_URL` is empty so migrations can run in the pre-deploy context. |
 | `LOG_CHANNEL` | `stderr` (recommended on Railway) |
+| `STORAGE_APP_PATH` | **For persistent uploads:** set to `/files/media` when you mount a volume at `/files/media` (liquidpilot-volume). Theme ZIPs, exports, and media uploads will then be stored on the volume and persist across deploys. |
+
+## 2b. Volume for uploads (theme ZIPs, exports, media)
+
+To keep uploaded files (theme ZIPs, exports, media assets) across deploys:
+
+1. Add a **Volume** to the LiquidPilot service and set **Mount Path** to `/files/media`.
+2. In **Variables**, add `STORAGE_APP_PATH=/files/media`.
+3. Redeploy. The app will use `/files/media` as the root for the `local` disk, so all uploads go to the volume.
 
 ## 3. Pre-Deploy command (DB setup and seed)
 
