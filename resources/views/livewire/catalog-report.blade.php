@@ -9,11 +9,17 @@
                     {{ $index + 1 }}. {{ $sec['name'] }} <code class="text-sm font-normal text-gray-600 dark:text-gray-400">{{ $sec['handle'] }}</code>
                 </h3>
                 <ul class="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    <li><strong>Enabled on:</strong> {{ is_array($sec['enabled_on']) ? implode(', ', $sec['enabled_on']) : ($sec['enabled_on'] ?? '-') }}</li>
+                    @php
+                        $enabledOn = $sec['enabled_on'] ?? null;
+                        $enabledOnStr = is_array($enabledOn) ? implode(', ', array_map('strval', $enabledOn)) : ($enabledOn !== null && $enabledOn !== '' ? (string) $enabledOn : '-');
+                        $blockTypes = $sec['block_types'] ?? [];
+                        $blockTypesStr = is_array($blockTypes) && !empty($blockTypes) ? implode(', ', array_map('strval', $blockTypes)) : '-';
+                    @endphp
+                    <li><strong>Enabled on:</strong> {{ $enabledOnStr }}</li>
                     <li><strong>Max blocks:</strong> {{ $sec['max_blocks'] ?? '-' }}</li>
                     <li><strong>Settings:</strong> {{ $sec['settings_count'] }}</li>
                     <li><strong>Blocks:</strong> {{ $sec['blocks_count'] }}</li>
-                    <li><strong>Block types:</strong> {{ implode(', ', $sec['block_types'] ?: ['-']) }}</li>
+                    <li><strong>Block types:</strong> {{ $blockTypesStr }}</li>
                 </ul>
 
                 <h4 class="mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">Settings / design elements</h4>

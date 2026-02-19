@@ -39,7 +39,7 @@ class AnalyzeThemeJob implements ShouldQueue
             $revision->appendAnalysisStep('start', 'Analysis started.');
 
             if (empty($revision->zip_path) || ! is_string($revision->zip_path)) {
-                throw new \RuntimeException('No theme ZIP uploaded. Upload a ZIP file when creating the Theme Revision (or on Edit) and run the scan again.');
+                throw new \RuntimeException('No theme ZIP file is linked. Use the "Upload ZIP" button on this page to upload a file, then click "Run scan now".');
             }
 
             $zipService = ThemeZipService::fromConfig();

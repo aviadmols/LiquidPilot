@@ -47,6 +47,7 @@ class ViewThemeRevision extends ViewRecord
                     $record = $this->getRecord();
                     $path = $data['zip_file'] ?? null;
                     if (! $path || ! $record) {
+                        Notification::make()->title('No file selected')->danger()->send();
                         return;
                     }
                     $relativePath = is_array($path) ? ($path[0] ?? '') : $path;
@@ -55,9 +56,18 @@ class ViewThemeRevision extends ViewRecord
                         Notification::make()->title('No file selected')->danger()->send();
                         return;
                     }
-                    $sourcePath = Storage::disk('local')->path($relativePath);
+                    $sourcePath = $relativePath;
+                    if (! str_starts_with($relativePath, '/') && ! str_starts_with($relativePath, '\\') && ! preg_match('#^[A-Za-z]:[/\\\\]#', $relativePath)) {
+                        $sourcePath = Storage::disk('local')->path($relativePath);
+                        if (! is_file($sourcePath)) {
+                            $alt = rtrim(storage_path('app'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . ltrim($relativePath, DIRECTORY_SEPARATOR);
+                            if (is_file($alt)) {
+                                $sourcePath = $alt;
+                            }
+                        }
+                    }
                     if (! is_file($sourcePath)) {
-                        Notification::make()->title('File not found')->body('Please try uploading again.')->danger()->send();
+                        Notification::make()->title('File not found')->body('The uploaded file could not be read. Try again or use Edit to upload.')->danger()->send();
                         return;
                     }
                     $service = ThemeZipService::fromConfig();
@@ -68,9 +78,10 @@ class ViewThemeRevision extends ViewRecord
                         'error' => null,
                         'status' => 'pending',
                     ]);
+                    $record->refresh();
                     Notification::make()
                         ->title('ZIP saved')
-                        ->body('You can now run the scan.')
+                        ->body('Click "Run scan now" to start the scan.')
                         ->success()
                         ->send();
                 }),
