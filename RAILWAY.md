@@ -45,6 +45,7 @@ In the app service **Variables**, add at least:
 | `APP_URL` | The URL Railway gives (e.g. `https://xxx.railway.app`) |
 | `DB_CONNECTION` | Optional if `DATABASE_URL` is set (app then defaults to `pgsql`). Otherwise set `pgsql`. |
 | `DATABASE_URL` or `DB_URL` | **Required for production.** From linked Postgres (e.g. reference `${{Postgres.DATABASE_URL}}` in the app’s Variables). |
+| `DATABASE_PUBLIC_URL` | From linked Postgres (e.g. `${{Postgres.DATABASE_PUBLIC_URL}}`). **Required for pre-deploy:** the init script uses it when `DATABASE_URL` is empty so migrations can run in the pre-deploy context. |
 | `LOG_CHANNEL` | `stderr` (recommended on Railway) |
 
 ## 3. Pre-Deploy command (DB setup and seed)
@@ -54,6 +55,8 @@ In **Settings** → **Deploy** → **Pre-Deploy Command** enter:
 ```bash
 chmod +x ./railway/init-app.sh && ./railway/init-app.sh
 ```
+
+The script uses **DATABASE_PUBLIC_URL** when **DATABASE_URL** is empty so migrations work during pre-deploy (the pre-deploy container may not have access to the private DB URL). Ensure **DATABASE_PUBLIC_URL** is set from the linked Postgres service.
 
 This runs on every deploy:
 
@@ -100,7 +103,7 @@ After the first deploy, the database will be migrated and seeded and the app wil
 If the deploy fails at **Pre deploy command**:
 
 1. Open the deployment and expand **Pre deploy command** in the log. The script prints `[Pre-deploy] ...` before each step. The line after the last successful step shows which command failed.
-2. **"ERROR: migrate failed"** – The database is not reachable or a migration errored. Ensure the **Postgres** service is **linked** to your app so `DATABASE_URL` is set. In the same log, Laravel prints the SQL or exception (e.g. connection refused, syntax error). Fix the cause (link DB, fix env, or fix the migration) and redeploy.
+2. **"ERROR: migrate failed"** – The database is not reachable or a migration errored. Ensure the **Postgres** service is **linked** to your app so `DATABASE_URL` and `DATABASE_PUBLIC_URL` are set (the init script uses `DATABASE_PUBLIC_URL` when `DATABASE_URL` is empty in pre-deploy). In the same log, Laravel prints the SQL or exception (e.g. connection refused, syntax error). Fix the cause (link DB, fix env, or fix the migration) and redeploy.
 3. **key:generate / config:cache failed** – Usually non-fatal; the script continues. If the deploy still fails, check that the app has write access to `storage` and `bootstrap/cache`.
 4. **"chmod" or "script not found"** – Ensure **Pre-Deploy Command** is exactly: `chmod +x ./railway/init-app.sh && ./railway/init-app.sh` and that `railway/init-app.sh` is in the repo.
 
