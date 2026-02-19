@@ -31,12 +31,20 @@ class CreateThemeRevision extends CreateRecord
     {
         $path = $this->pendingZipPath;
         if ($path && $this->record) {
-            $sourcePath = is_array($path) ? (Storage::disk('local')->path($path[0] ?? '')) : Storage::disk('local')->path($path);
-            if (is_file($sourcePath)) {
-                $stored = ThemeZipService::fromConfig()->storeFromPath($sourcePath, $this->record->id, $this->record->original_filename);
-                $this->record->update(['zip_path' => $stored]);
+            $relativePath = is_array($path) ? ($path[0] ?? '') : $path;
+            $relativePath = is_string($relativePath) ? trim($relativePath) : '';
+            if ($relativePath !== '') {
+                $sourcePath = Storage::disk('local')->path($relativePath);
+                if (is_file($sourcePath)) {
+                    $stored = ThemeZipService::fromConfig()->storeFromPath($sourcePath, $this->record->id, $this->record->original_filename);
+                    $this->record->update(['zip_path' => $stored]);
+                } else {
+                    $this->record->update(['error' => 'Uploaded file was not found. Please use Edit to re-upload the theme ZIP.']);
+                }
             }
-            AnalyzeThemeJob::dispatch($this->record->id);
+            if ($this->record->zip_path) {
+                AnalyzeThemeJob::dispatch($this->record->id);
+            }
         }
         $this->pendingZipPath = null;
     }

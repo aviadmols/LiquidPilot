@@ -36,6 +36,8 @@ class ThemeRevisionResource extends Resource
                 Section::make()->schema([
                     FileUpload::make('zip_file')
                         ->label('Theme ZIP')
+                        ->disk('local')
+                        ->directory('livewire-tmp/theme-zip')
                         ->acceptedFileTypes([
                             'application/zip',
                             'application/x-zip',
@@ -43,7 +45,7 @@ class ThemeRevisionResource extends Resource
                             'application/octet-stream',
                         ])
                         ->maxSize(config('theme.zip_max_size_bytes', 100 * 1024 * 1024))
-                        ->required()
+                        ->required(fn (): bool => str_ends_with(request()->route()?->getName() ?? '', 'create'))
                         ->storeFiles(false),
                 ]),
             ]);
@@ -79,6 +81,7 @@ class ThemeRevisionResource extends Resource
         return [
             'index' => ManageThemeRevisions::route('/'),
             'create' => Pages\CreateThemeRevision::route('/create'),
+            'edit' => Pages\EditThemeRevision::route('/{record}/edit'),
             'view' => ViewThemeRevision::route('/{record}'),
         ];
     }
