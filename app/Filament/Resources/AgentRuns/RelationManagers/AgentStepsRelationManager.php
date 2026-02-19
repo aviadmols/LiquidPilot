@@ -7,6 +7,7 @@ use App\Jobs\PlanHomepageJob;
 use App\Jobs\SummarizeCatalogJob;
 use App\Models\AgentRun;
 use App\Models\AgentStep;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -46,7 +47,7 @@ class AgentStepsRelationManager extends RelationManager
             ->defaultSort('id')
             ->headerActions([])
             ->actions([
-                \Filament\Tables\Actions\Action::make('editOutput')
+                Action::make('editOutput')
                     ->label('Edit / Update')
                     ->icon('heroicon-o-pencil-square')
                     ->fillForm(fn (AgentStep $record) => [
@@ -67,7 +68,7 @@ class AgentStepsRelationManager extends RelationManager
                         $record->update(['output_json' => $decoded]);
                         Notification::make()->title('Step updated')->success()->send();
                     }),
-                \Filament\Tables\Actions\Action::make('rerunFromHere')
+                Action::make('rerunFromHere')
                     ->label('Re-run from here')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')

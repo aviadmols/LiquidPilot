@@ -35,7 +35,7 @@ class MediaAssetsRelationManager extends RelationManager
             ])
             ->defaultSort('id')
             ->headerActions([
-                \Filament\Tables\Actions\CreateAction::make()
+                \Filament\Actions\CreateAction::make()
                     ->label('Upload media')
                     ->form($this->getUploadFormSchema())
                     ->using(function (array $data): MediaAsset {
@@ -101,17 +101,17 @@ class MediaAssetsRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                \Filament\Tables\Actions\Action::make('view')
+                \Filament\Actions\Action::make('view')
                     ->label('View')
                     ->icon('heroicon-o-eye')
                     ->url(fn (MediaAsset $record): string => route('admin.download-run-media', ['agentRun' => $record->agent_run_id, 'mediaAsset' => $record->id]))
                     ->openUrlInNewTab(true),
-                \Filament\Tables\Actions\Action::make('download')
+                \Filament\Actions\Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->url(fn (MediaAsset $record): string => route('admin.download-run-media', ['agentRun' => $record->agent_run_id, 'mediaAsset' => $record->id]))
                     ->openUrlInNewTab(true),
-                \Filament\Tables\Actions\DeleteAction::make()
+                \Filament\Actions\DeleteAction::make()
                     ->before(function (MediaAsset $record): void {
                         $run = $record->agentRun;
                         $run->load('themeRevision');

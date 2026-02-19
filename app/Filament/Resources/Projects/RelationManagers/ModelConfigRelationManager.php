@@ -27,11 +27,11 @@ class ModelConfigRelationManager extends RelationManager
                 TextColumn::make('is_active')->badge(),
             ])
             ->headerActions([
-                \Filament\Tables\Actions\CreateAction::make(),
+                \Filament\Actions\CreateAction::make(),
             ])
             ->actions([
-                \Filament\Tables\Actions\EditAction::make(),
-                \Filament\Tables\Actions\DeleteAction::make(),
+                \Filament\Actions\EditAction::make(),
+                \Filament\Actions\DeleteAction::make(),
             ]);
     }
 
