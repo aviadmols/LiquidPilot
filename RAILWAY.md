@@ -95,6 +95,17 @@ composer install --no-dev --optimize-autoloader && npm ci && npm run build
 
 After the first deploy, the database will be migrated and seeded and the app will be up.
 
+## Pre-deploy command failed
+
+If the deploy fails at **Pre deploy command**:
+
+1. Open the deployment and expand **Pre deploy command** in the log. The script prints `[Pre-deploy] ...` before each step. The line after the last successful step shows which command failed.
+2. **"ERROR: migrate failed"** – The database is not reachable or a migration errored. Ensure the **Postgres** service is **linked** to your app so `DATABASE_URL` is set. In the same log, Laravel prints the SQL or exception (e.g. connection refused, syntax error). Fix the cause (link DB, fix env, or fix the migration) and redeploy.
+3. **key:generate / config:cache failed** – Usually non-fatal; the script continues. If the deploy still fails, check that the app has write access to `storage` and `bootstrap/cache`.
+4. **"chmod" or "script not found"** – Ensure **Pre-Deploy Command** is exactly: `chmod +x ./railway/init-app.sh && ./railway/init-app.sh` and that `railway/init-app.sh` is in the repo.
+
+---
+
 ## If the app crashes after build
 
 1. **Start Command must NOT be admin:create** – If deploy logs show "Run with --password=... Do NOT use this command as the app start command", the Start Command is set to create an admin user. Clear it or set to `php artisan serve --host=0.0.0.0 --port=${PORT:-8080}` (see warning at top of this file).

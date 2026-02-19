@@ -11,12 +11,24 @@ class ThemeRevision extends Model
 {
     protected $fillable = [
         'project_id', 'original_filename', 'zip_path', 'extracted_path',
-        'signature_sha256', 'status', 'error', 'catalog_path', 'scanned_at',
+        'signature_sha256', 'status', 'error', 'analysis_steps', 'catalog_path', 'scanned_at',
     ];
 
     protected $casts = [
         'scanned_at' => 'datetime',
+        'analysis_steps' => 'array',
     ];
+
+    public function appendAnalysisStep(string $step, string $message): void
+    {
+        $steps = $this->analysis_steps ?? [];
+        $steps[] = [
+            'step' => $step,
+            'message' => $message,
+            'at' => now()->toIso8601String(),
+        ];
+        $this->update(['analysis_steps' => $steps]);
+    }
 
     /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo

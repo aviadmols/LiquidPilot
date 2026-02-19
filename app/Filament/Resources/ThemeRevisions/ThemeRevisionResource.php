@@ -63,6 +63,7 @@ class ThemeRevisionResource extends Resource
                 //
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -78,6 +79,7 @@ class ThemeRevisionResource extends Resource
         return [
             'index' => ManageThemeRevisions::route('/'),
             'create' => Pages\CreateThemeRevision::route('/create'),
+            'view' => ViewThemeRevision::route('/{record}'),
         ];
     }
 }
