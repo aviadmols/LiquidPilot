@@ -23,7 +23,7 @@ class AgentRun extends Model
     public const IMAGE_GENERATOR_NANOBANNA = 'nanobanna';
 
     protected $fillable = [
-        'project_id', 'theme_revision_id', 'mode', 'selected_section_handle', 'output_format', 'creative_brief',
+        'project_id', 'theme_revision_id', 'brand_kit_id', 'mode', 'selected_section_handle', 'output_format', 'creative_brief',
         'image_generator', 'max_images_per_run',
         'status', 'progress', 'started_at', 'finished_at', 'error',
     ];
@@ -43,6 +43,21 @@ class AgentRun extends Model
     public function themeRevision(): BelongsTo
     {
         return $this->belongsTo(ThemeRevision::class);
+    }
+
+    /** @return BelongsTo<BrandKit, $this> */
+    public function brandKit(): BelongsTo
+    {
+        return $this->belongsTo(BrandKit::class);
+    }
+
+    /** Resolve brand kit for this run: explicit brand_kit_id or project's first. */
+    public function resolveBrandKit(): ?BrandKit
+    {
+        if ($this->brand_kit_id) {
+            return $this->brandKit ?? BrandKit::find($this->brand_kit_id);
+        }
+        return BrandKit::where('project_id', $this->project_id)->first();
     }
 
     /** @return HasMany<AgentStep> */

@@ -50,7 +50,7 @@ class ExportThemeJob implements ShouldQueue
             json_encode($manifest, JSON_PRETTY_PRINT)
         );
 
-        $brand = BrandKit::where('project_id', $run->project_id)->first();
+        $brand = $run->resolveBrandKit();
         if ($brand?->logo_path) {
             $logoFullPath = Storage::disk('public')->path($brand->logo_path);
             if (is_file($logoFullPath)) {

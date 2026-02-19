@@ -72,3 +72,13 @@ To create an admin user on production, run **once** in Railway → your service 
 - **Variables**: `APP_KEY`, `APP_URL`, `APP_ENV`, `LOG_CHANNEL`, and DB connection.
 
 After the first deploy, the database will be migrated and seeded and the app will be up.
+
+## If the app crashes after build
+
+1. **Pre-Deploy must run** – If Pre-Deploy is not set or fails, migrations (e.g. `brand_kit_id` on `agent_runs`) will not run and the app can crash on first request. In **Settings → Deploy**, set **Pre-Deploy Command** to:
+   ```bash
+   chmod +x ./railway/init-app.sh && ./railway/init-app.sh
+   ```
+2. **Check deploy logs** – In Railway, open the **Deployments** tab and the latest deployment. Check **Build Logs** and **Deploy Logs** (runtime). If Pre-Deploy fails, fix the error (e.g. `DATABASE_URL` / `DB_URL` missing).
+3. **Variables** – Ensure `APP_KEY`, `APP_ENV=production`, `APP_DEBUG=false`, and the database URL are set. For Postgres, the linked DB service usually provides `DATABASE_URL`; map it to `DB_URL` or set `DATABASE_URL` as in your `.env` / `config/database.php`.
+4. **Health** – The app exposes a health route at `/up`. After deploy, open `https://your-app.railway.app/up` to confirm the app responds.

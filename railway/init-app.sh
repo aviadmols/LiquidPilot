@@ -11,5 +11,6 @@ fi
 
 php artisan config:clear
 php artisan migrate --force
-php artisan db:seed --force
+# Seed only if migrations succeeded; do not fail deploy if seed fails (e.g. duplicate data)
+php artisan db:seed --force || true
 php artisan config:cache

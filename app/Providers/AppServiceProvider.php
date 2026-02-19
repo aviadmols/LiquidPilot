@@ -24,15 +24,18 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
         URL::forceScheme('https');
-        // Use the request host so assets never point to localhost when served from Railway/etc.
-        $request = request();
-        if ($request && $request->getHost()) {
-            URL::forceRootUrl('https://' . $request->getHost());
-        } elseif (config('app.url')) {
-            $url = config('app.url');
-            if (!str_contains($url, 'localhost')) {
-                URL::forceRootUrl($url);
+        $rootUrl = null;
+        if (! $this->app->runningInConsole()) {
+            $request = request();
+            if ($request && $request->getHost()) {
+                $rootUrl = 'https://' . $request->getHost();
             }
+        }
+        if (! $rootUrl && config('app.url') && ! str_contains(config('app.url'), 'localhost')) {
+            $rootUrl = config('app.url');
+        }
+        if ($rootUrl) {
+            URL::forceRootUrl($rootUrl);
         }
     }
 }

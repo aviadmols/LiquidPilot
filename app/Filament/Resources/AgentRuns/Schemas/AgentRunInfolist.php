@@ -15,6 +15,7 @@ class AgentRunInfolist
                 Section::make()->schema([
                     TextEntry::make('id'),
                     TextEntry::make('project.name'),
+                    TextEntry::make('brandKit.brand_name')->label('Brand Kit')->placeholder('Project default'),
                     TextEntry::make('themeRevision.original_filename')->label('Theme'),
                     TextEntry::make('mode'),
                     TextEntry::make('output_format')->label('Output'),

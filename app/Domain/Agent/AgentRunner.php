@@ -109,7 +109,7 @@ class AgentRunner
         $logger = AIProgressLogger::forRun($run->id);
         $step = $this->createStep($run, 'plan', 'running');
         $handles = $run->themeRevision->themeSections()->pluck('handle')->all();
-        $brand = BrandKit::where('project_id', $run->project_id)->first();
+        $brand = $run->resolveBrandKit();
         $brandJson = $brand ? json_encode($brand->toArray()) : '{}';
 
         $creativeBrief = $run->creative_brief && trim($run->creative_brief) !== '' ? trim($run->creative_brief) : 'None';
@@ -166,7 +166,7 @@ class AgentRunner
             $resolved = $this->promptRenderer->resolve('SECTION_COMPOSE', $run->project_id, [
                 'section_handle' => $handle,
                 'section_schema' => json_encode($schema),
-                'brand' => json_encode(BrandKit::where('project_id', $run->project_id)->first()?->toArray() ?? []),
+                'brand' => json_encode($run->resolveBrandKit()?->toArray() ?? []),
                 'creative_brief' => $creativeBrief,
             ]);
             $apiKey = $this->getApiKey($run->project_id);

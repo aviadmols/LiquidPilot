@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AgentRuns\Schemas;
 
 use App\Models\AgentRun;
+use App\Models\BrandKit;
 use App\Models\Project;
 use App\Models\ThemeRevision;
 use App\Models\ThemeSection;
@@ -18,8 +19,8 @@ class AgentRunForm
     {
         return $schema
             ->components([
-                Section::make('Run setup')
-                    ->description('Choose project and template (theme). The project\'s brand kit will be used. After Create you will see each step and can edit or re-run from any step.')
+                Section::make('Project, template and brand')
+                    ->description('Choose project, theme revision, and optionally a brand kit. If no brand kit is selected, the project default is used.')
                     ->schema([
                         Select::make('project_id')
                             ->label('Project')
@@ -38,6 +39,22 @@ class AgentRunForm
                             ->required()
                             ->searchable()
                             ->live(),
+                        Select::make('brand_kit_id')
+                            ->label('Brand Kit')
+                            ->options(fn ($get) => $get('project_id')
+                                ? BrandKit::where('project_id', $get('project_id'))
+                                    ->get()
+                                    ->mapWithKeys(fn ($b) => [$b->id => $b->brand_name ?? 'Brand #' . $b->id])
+                                : [])
+                            ->placeholder('Use project default')
+                            ->nullable()
+                            ->searchable()
+                            ->disabled(fn ($get) => ! $get('project_id')),
+                    ])
+                    ->columns(2),
+                Section::make('Run options')
+                    ->description('Mode, output format, image generator, and optional creative brief.')
+                    ->schema([
                         Select::make('mode')
                             ->label('Mode')
                             ->options([

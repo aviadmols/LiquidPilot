@@ -40,7 +40,7 @@ class GenerateMediaJob implements ShouldQueue
             ? min($run->max_images_per_run, count($required))
             : count($required);
 
-        $brand = BrandKit::where('project_id', $run->project_id)->first();
+        $brand = $run->resolveBrandKit();
         $colors = $brand?->colors_json ?? ['primary' => '#4F46E5', 'secondary' => '#7C3AED'];
         $imageryVibe = $this->imageryStyleLabel($brand);
 
