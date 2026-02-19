@@ -2,6 +2,23 @@
 
 When the project is deployed on Railway, configure the following so the database and app run correctly.
 
+---
+
+## ⚠️ If you see: "Run with --password=... Do NOT use this command as the app start command"
+
+**Your Start Command is wrong.** The container is running `admin:create` or `make:admin-user` instead of the web server.
+
+**Fix:** In Railway → your **service** → **Settings** → **Deploy** (or **Start**):
+
+1. Find the **"Start Command"** / **"Custom Start Command"** field.
+2. **Clear it completely** (leave empty) so Railway uses the Procfile, **or** set it exactly to:
+   ```bash
+   php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+   ```
+3. Save and **Redeploy**. The app will then start the HTTP server instead of the admin-creation command.
+
+---
+
 ## 1. Add a database (Postgres or MySQL)
 
 - In Railway: **New** → **Database** → **Postgres** (or MySQL).
@@ -75,10 +92,11 @@ After the first deploy, the database will be migrated and seeded and the app wil
 
 ## If the app crashes after build
 
-1. **Pre-Deploy must run** – If Pre-Deploy is not set or fails, migrations (e.g. `brand_kit_id` on `agent_runs`) will not run and the app can crash on first request. In **Settings → Deploy**, set **Pre-Deploy Command** to:
+1. **Start Command must NOT be admin:create** – If deploy logs show "Run with --password=... Do NOT use this command as the app start command", the Start Command is set to create an admin user. Clear it or set to `php artisan serve --host=0.0.0.0 --port=${PORT:-8080}` (see warning at top of this file).
+2. **Pre-Deploy must run** – If Pre-Deploy is not set or fails, migrations (e.g. `brand_kit_id` on `agent_runs`) will not run and the app can crash on first request. In **Settings → Deploy**, set **Pre-Deploy Command** to:
    ```bash
    chmod +x ./railway/init-app.sh && ./railway/init-app.sh
    ```
-2. **Check deploy logs** – In Railway, open the **Deployments** tab and the latest deployment. Check **Build Logs** and **Deploy Logs** (runtime). If Pre-Deploy fails, fix the error (e.g. `DATABASE_URL` / `DB_URL` missing).
-3. **Variables** – Ensure `APP_KEY`, `APP_ENV=production`, `APP_DEBUG=false`, and the database URL are set. For Postgres, the linked DB service usually provides `DATABASE_URL`; map it to `DB_URL` or set `DATABASE_URL` as in your `.env` / `config/database.php`.
-4. **Health** – The app exposes a health route at `/up`. After deploy, open `https://your-app.railway.app/up` to confirm the app responds.
+3. **Check deploy logs** – In Railway, open the **Deployments** tab and the latest deployment. Check **Build Logs** and **Deploy Logs** (runtime). If Pre-Deploy fails, fix the error (e.g. `DATABASE_URL` / `DB_URL` missing).
+4. **Variables** – Ensure `APP_KEY`, `APP_ENV=production`, `APP_DEBUG=false`, and the database URL are set. For Postgres, the linked DB service usually provides `DATABASE_URL`; map it to `DB_URL` or set `DATABASE_URL` as in your `.env` / `config/database.php`.
+5. **Health** – The app exposes a health route at `/up`. After deploy, open `https://your-app.railway.app/up` to confirm the app responds.
