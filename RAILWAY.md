@@ -4,11 +4,15 @@ When the project is deployed on Railway, configure the following so the database
 
 ---
 
-## ⚠️ If you see: "Run with --password=... Do NOT use this command as the app start command"
+## ✅ Start command from code (fixes 502)
 
-**Your Start Command is wrong.** The container is running `admin:create` or `make:admin-user` instead of the web server.
+This repo has **[railway.json](railway.json)** with `"startCommand": "sh start.sh"`. **Railway uses config from the repo and overrides the dashboard.** So after you push and redeploy, the correct start command runs even if the dashboard had something else (e.g. `admin:create`). No need to change the dashboard – just push, redeploy, and the app should start.
 
-**Fix:** In Railway → your **service** → **Settings** → **Deploy** (or **Start**):
+---
+
+## ⚠️ If you still see: "Run with --password=... Do NOT use this command"
+
+**Your dashboard Start Command was wrong.** With `railway.json` in the repo it should be overridden. If 502 persists:
 
 1. Find the **"Start Command"** / **"Custom Start Command"** field.
 2. Set it **exactly** to one of these (copy-paste, do not add anything else):

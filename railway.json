@@ -1,0 +1,9 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "deploy": {
+    "startCommand": "sh start.sh",
+    "preDeployCommand": "chmod +x ./railway/init-app.sh && ./railway/init-app.sh",
+    "healthcheckPath": "/up",
+    "healthcheckTimeout": 30
+  }
+}
