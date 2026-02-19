@@ -34,9 +34,9 @@ php artisan migrate
 php artisan db:seed
 ```
 
-4. Create an admin user (or use the seeded one):
+4. Log in to the admin panel:
 
-- Email: `admin@example.com` (run `php artisan tinker` and set a password, or use `User::factory()->create([...])`).
+- After `php artisan db:seed`, use **admin@example.com** / **password** (change after first login).
 
 5. Build frontend assets (Filament):
 

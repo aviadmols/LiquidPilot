@@ -24,10 +24,10 @@ When the project is deployed on Railway, configure the following so the database
 
 ---
 
-## 1. Add a database (Postgres or MySQL)
+## 1. Add a database (Postgres) – required
 
-- In Railway: **New** → **Database** → **Postgres** (or MySQL).
-- Railway will set the `DATABASE_URL` variable (or Postgres provides `DATABASE_URL`).
+- In Railway: **New** → **Database** → **Postgres**.
+- **Link the Postgres service to your app**: open your **app service** → **Variables** → **Add variable** (or use the **Connect** tab on the Postgres service to connect to your app). The app must receive **`DATABASE_URL`** (or set `DB_URL` to the same value). Without this, the app uses SQLite (`/app/database/database.sqlite`), which is ephemeral on Railway and not suitable for production. If logs show `Connection: sqlite`, the app is **not** using Postgres – link the database and redeploy.
 
 ## 2. Environment variables
 
@@ -39,8 +39,8 @@ In the app service **Variables**, add at least:
 | `APP_ENV` | `production` |
 | `APP_DEBUG` | `false` |
 | `APP_URL` | The URL Railway gives (e.g. `https://xxx.railway.app`) |
-| `DB_CONNECTION` | `pgsql` (if using Postgres) or `mysql` |
-| `DB_URL` | If you added Postgres: `${{Postgres.DATABASE_URL}}` (reference to the DB service variable). For MySQL: the URL provided by the MySQL service. |
+| `DB_CONNECTION` | Optional if `DATABASE_URL` is set (app then defaults to `pgsql`). Otherwise set `pgsql`. |
+| `DATABASE_URL` or `DB_URL` | **Required for production.** From linked Postgres (e.g. reference `${{Postgres.DATABASE_URL}}` in the app’s Variables). |
 | `LOG_CHANNEL` | `stderr` (recommended on Railway) |
 
 ## 3. Pre-Deploy command (DB setup and seed)
@@ -76,11 +76,11 @@ composer install --no-dev --optimize-autoloader && npm ci && npm run build
 - In **Railway Dashboard** → your service → **Settings** → **Deploy** → **Start Command**: set **exactly** to `sh start.sh` or to `php artisan serve --host=0.0.0.0 --port=${PORT:-8080}`. Do **not** leave here `admin:create` or `make:admin-user`.
 - This repo has [start.sh](start.sh) (run with `sh start.sh`), a [Procfile](Procfile), and [railpack.json](railpack.json). If your app keeps crashing, set Start Command to `sh start.sh` explicitly.
 
-To create an admin user on production, run **once** in Railway → your service → **Shell** (or a one-off run):
+**Default login after seed:** `admin@example.com` / `password` (change after first login). To create another admin in production, run **once** in Railway → your service → **Shell**:
   ```bash
   php artisan make:admin-user your@email.com --password=YourSecurePassword
   ```
-  Or use `admin:create your@email.com --password=YourPassword`. Do **not** use this as the Start Command.
+  Or `admin:create your@email.com --password=YourPassword`. Do **not** use this as the Start Command.
 
 ## Summary
 
@@ -101,3 +101,29 @@ After the first deploy, the database will be migrated and seeded and the app wil
 3. **Check deploy logs** – In Railway, open the **Deployments** tab and the latest deployment. Check **Build Logs** and **Deploy Logs** (runtime). If Pre-Deploy fails, fix the error (e.g. `DATABASE_URL` / `DB_URL` missing).
 4. **Variables** – Ensure `APP_KEY`, `APP_ENV=production`, `APP_DEBUG=false`, and the database URL are set. For Postgres, the linked DB service usually provides `DATABASE_URL`; map it to `DB_URL` or set `DATABASE_URL` as in your `.env` / `config/database.php`.
 5. **Health** – The app exposes a health route at `/up`. After deploy, open `https://your-app.railway.app/up` to confirm the app responds.
+
+## 500 error on the site
+
+If the app starts but the site returns **500 Internal Server Error**:
+
+1. **Database** – The app uses **Postgres** on Railway. Ensure the Postgres service is **linked** to your app (Variables will get `DATABASE_URL`). The app uses `DATABASE_URL` when `DB_URL` is not set. If you use a different DB variable, set `DB_CONNECTION=pgsql` and `DB_URL` to your connection string.
+2. **Pre-Deploy ran** – Migrations must run. In **Settings → Deploy**, **Pre-Deploy Command** must be: `chmod +x ./railway/init-app.sh && ./railway/init-app.sh`. Redeploy so that migrations (including `brand_kit_id` on `agent_runs`) are applied.
+3. **APP_KEY** – Must be set. If empty, run locally `php artisan key:generate` and paste the value into **Variables**.
+4. **See the real error** – In Railway → your service → **Deployments** → open the latest deployment → **View Logs** (or **Deploy Logs**). Reload the site and check the logs; Laravel will print the exception there (when `LOG_CHANNEL=stderr`). Fix the reported error (e.g. missing column = run migrations, connection refused = wrong DB_URL/DATABASE_URL).
+5. **Test /up** – Open `https://your-app.railway.app/up`. If that returns 200 but `/` or `/admin` returns 500, the problem is likely DB or session (migrations, DB connection, or APP_KEY).
+
+## 502 Bad Gateway
+
+502 means Railway’s proxy **did not get a valid response** from your app (app not running, crashed, or wrong port).
+
+1. **Start Command** – It **must** start the web server. In **Settings → Deploy → Start Command** set exactly to:
+   ```bash
+   sh start.sh
+   ```
+   Not `admin:create`, not `make:admin-user`, not empty if your platform ignores the Procfile.
+2. **Deploy Logs** – In **Deployments** → latest deploy → **View Logs**. After deploy you should see:
+   - `Starting Laravel on 0.0.0.0:XXXX` (then the server is starting).
+   - If you see `Run with --password=...` again, the Start Command is still wrong (see top of this file).
+   - If you see a PHP fatal error, fix that (missing env, missing DB, etc.).
+3. **Pre-Deploy** – If Pre-Deploy fails (e.g. `migrate` fails because DB is missing), the deploy might be marked failed and the container might not start. Set **Pre-Deploy Command** to: `chmod +x ./railway/init-app.sh && ./railway/init-app.sh`, and ensure **Variables** include `DATABASE_URL` (from linked Postgres) or `DB_URL` and `DB_CONNECTION=pgsql`.
+4. **Port** – The app must listen on the port Railway sets (`PORT`). `start.sh` uses `$PORT`; do not override it in the Start Command.
