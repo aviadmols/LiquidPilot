@@ -160,7 +160,11 @@ class ViewThemeRevision extends ViewRecord
                 ->description('Upload or replace the theme ZIP using the "Upload ZIP" button above. Then run the scan.')
                 ->schema([
                     View::make('filament.theme-revision-current-file')
-                        ->viewData(['record' => $record]),
+                        ->viewData([
+                            'record' => $record,
+                            'zipPath' => $record->zip_path,
+                            'zipFullPath' => $record->zip_path ? ThemeZipService::fromConfig()->fullPath($record->zip_path) : null,
+                        ]),
                 ])
                 ->collapsible()
                 ->collapsed(false),

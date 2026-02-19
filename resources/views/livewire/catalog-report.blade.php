@@ -10,10 +10,19 @@
                 </h3>
                 <ul class="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
                     @php
+                        $toStr = function ($v) use (&$toStr) {
+                            if (is_array($v)) {
+                                return implode(', ', array_map($toStr, $v));
+                            }
+                            if (is_object($v)) {
+                                return method_exists($v, '__toString') ? (string) $v : json_encode($v);
+                            }
+                            return $v === null || $v === '' ? '-' : (string) $v;
+                        };
                         $enabledOn = $sec['enabled_on'] ?? null;
-                        $enabledOnStr = is_array($enabledOn) ? implode(', ', array_map('strval', $enabledOn)) : ($enabledOn !== null && $enabledOn !== '' ? (string) $enabledOn : '-');
+                        $enabledOnStr = is_array($enabledOn) ? $toStr($enabledOn) : ($enabledOn !== null && $enabledOn !== '' ? (string) $enabledOn : '-');
                         $blockTypes = $sec['block_types'] ?? [];
-                        $blockTypesStr = is_array($blockTypes) && !empty($blockTypes) ? implode(', ', array_map('strval', $blockTypes)) : '-';
+                        $blockTypesStr = is_array($blockTypes) && !empty($blockTypes) ? $toStr($blockTypes) : '-';
                     @endphp
                     <li><strong>Enabled on:</strong> {{ $enabledOnStr }}</li>
                     <li><strong>Max blocks:</strong> {{ $sec['max_blocks'] ?? '-' }}</li>
