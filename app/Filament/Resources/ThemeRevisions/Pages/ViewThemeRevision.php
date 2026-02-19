@@ -12,7 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\TextEntry;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
@@ -148,9 +148,8 @@ class ViewThemeRevision extends ViewRecord
             Section::make('Theme ZIP')
                 ->description('Upload or replace the theme ZIP using the "Upload ZIP" button above. Then run the scan.')
                 ->schema([
-                    TextEntry::make('original_filename')
-                        ->label('Current file')
-                        ->placeholder('No file uploaded yet'),
+                    View::make('filament.theme-revision-current-file')
+                        ->viewData(['record' => $record]),
                 ])
                 ->collapsible()
                 ->collapsed(false),
