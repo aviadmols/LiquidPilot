@@ -22,20 +22,47 @@ class ViewThemeRevision extends ViewRecord
         $actions = [EditAction::make()];
         $record = $this->getRecord();
         if (in_array($record->status, ['pending', 'failed'], true)) {
-            $actions[] = \Filament\Actions\Action::make('runScan')
-                ->label('Run scan')
+            $actions[] = \Filament\Actions\Action::make('runScanNow')
+                ->label('Run scan now')
                 ->icon('heroicon-o-play')
                 ->color('primary')
                 ->requiresConfirmation()
-                ->modalHeading('Run theme analysis')
-                ->modalDescription('This will run or re-run the theme scan (extract, signature, catalog). The analysis log below will update. Make sure the queue worker is running (e.g. `php artisan queue:work`).')
+                ->modalHeading('Run theme analysis now')
+                ->modalDescription('The scan will run in this browser tab and may take up to a minute. No queue worker needed.')
+                ->action(function () {
+                    $record = $this->getRecord();
+                    $record->update(['status' => 'pending', 'analysis_steps' => [], 'error' => null]);
+                    try {
+                        AnalyzeThemeJob::dispatchSync($record->id);
+                        $record->refresh();
+                        Notification::make()
+                            ->title($record->status === 'ready' ? 'Scan completed' : 'Scan finished')
+                            ->body($record->status === 'ready' ? 'Theme analyzed successfully.' : ($record->error ?? 'Check the analysis log.'))
+                            ->success()
+                            ->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Scan failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                    $record->refresh();
+                    return redirect()->to(ThemeRevisionResource::getUrl('view', ['record' => $record]));
+                });
+            $actions[] = \Filament\Actions\Action::make('runScan')
+                ->label('Run in background')
+                ->icon('heroicon-o-arrow-path')
+                ->requiresConfirmation()
+                ->modalHeading('Run theme analysis in background')
+                ->modalDescription('Requires a running queue worker (php artisan queue:work). The analysis log will auto-refresh when the job runs.')
                 ->action(function () {
                     $record = $this->getRecord();
                     $record->update(['status' => 'pending', 'analysis_steps' => [], 'error' => null]);
                     AnalyzeThemeJob::dispatch($record->id);
                     Notification::make()
-                        ->title('Scan started')
-                        ->body('The analysis log below will refresh. If nothing appears, start the queue worker: php artisan queue:work')
+                        ->title('Scan queued')
+                        ->body('Start the queue worker (php artisan queue:work) if the log does not update.')
                         ->success()
                         ->send();
                 });
