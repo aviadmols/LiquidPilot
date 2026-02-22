@@ -33,9 +33,13 @@ class AppServiceProvider extends ServiceProvider
         }
         if (! $rootUrl && config('app.url') && ! str_contains(config('app.url'), 'localhost')) {
             $rootUrl = config('app.url');
+            // Ensure HTTPS in production (avoid Mixed Content when APP_URL is http://)
+            if (str_starts_with($rootUrl, 'http://')) {
+                $rootUrl = 'https://' . substr($rootUrl, 7);
+            }
         }
         if ($rootUrl) {
-            URL::forceRootUrl($rootUrl);
+            URL::forceRootUrl(rtrim($rootUrl, '/'));
         }
     }
 }
