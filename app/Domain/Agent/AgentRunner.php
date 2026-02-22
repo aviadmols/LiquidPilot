@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\ThemeCatalog;
 use App\Models\ThemeRevision;
 use App\Models\ThemeSection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Orchestrates agent steps: resolve prompts, call OpenRouter, validate outputs, update steps and progress.
@@ -33,6 +34,12 @@ class AgentRunner
     public function runSummarize(AgentRun $run): array
     {
         $logger = AIProgressLogger::forRun($run->id);
+        Log::info('AgentRunner::runSummarize entered', ['agent_run_id' => $run->id]);
+        $logger->logStart('summary', 'Summarize step entered', [
+            'has_theme_revision' => (bool) $run->themeRevision,
+            'theme_revision_id' => $run->theme_revision_id,
+        ]);
+
         $step = $this->createStep($run, 'summary', 'running');
         $run->themeRevision->load('themeCatalog');
         $catalog = $run->themeRevision->themeCatalog?->catalog_json ?? [];
@@ -42,6 +49,16 @@ class AgentRunner
 
         $chunker = new PromptChunker(2000);
         $chunks = $chunker->chunk($catalogJson);
+        Log::info('AgentRunner::runSummarize catalog loaded', [
+            'agent_run_id' => $run->id,
+            'sections_count' => count($sections),
+            'chunks_count' => count($chunks),
+        ]);
+        $logger->logStart('summary', 'Catalog loaded', [
+            'sections_count' => count($sections),
+            'chunks_count' => count($chunks),
+        ]);
+
         if (empty($chunks)) {
             $step->update(['status' => 'completed', 'output_json' => ['summary' => []]]);
             $logger->updateProgress(15);
@@ -56,6 +73,10 @@ class AgentRunner
             $apiKey = $this->getApiKey($projectId);
             $modelConfig = $resolved['model_config'];
             if (!$apiKey || !$modelConfig) {
+                $logger->logError('summary', 'Missing OpenRouter API key or model config for project', [
+                    'has_api_key' => (bool) $apiKey,
+                    'has_model_config' => (bool) $modelConfig,
+                ]);
                 $step->update(['status' => 'failed', 'logs_text' => 'No API key or model config']);
                 throw new \RuntimeException('Missing OpenRouter API key or model config for project');
             }
