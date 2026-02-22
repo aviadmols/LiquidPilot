@@ -8,6 +8,8 @@ When the project is deployed on Railway, configure the following so the database
 
 This repo has **[railway.json](railway.json)** with `"startCommand": "sh start.sh"`. **Railway uses config from the repo and overrides the dashboard.** So after you push and redeploy, the correct start command runs even if the dashboard had something else (e.g. `admin:create`). No need to change the dashboard – just push, redeploy, and the app should start.
 
+**[start.sh](start.sh)** starts both the web server and the **queue worker** (database queue) in the same container, so **Agent Runs work without a separate worker process** – no need to run `php artisan queue:work database` manually.
+
 ---
 
 ## ⚠️ If you still see: "Run with --password=... Do NOT use this command"
