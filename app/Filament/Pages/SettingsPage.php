@@ -51,7 +51,8 @@ class SettingsPage extends Page
 
     public function saveOpenRouterKey(): void
     {
-        $key = $this->openrouter_api_key !== null ? trim((string) $this->openrouter_api_key) : '';
+        $raw = $this->openrouter_api_key !== null ? (string) $this->openrouter_api_key : '';
+        $key = trim(preg_replace('/\s+/', ' ', $raw));
         if ($key === '') {
             Notification::make()->title('Enter a key to save, or leave blank to keep the current key.')->warning()->send();
             return;
