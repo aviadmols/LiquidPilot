@@ -73,12 +73,13 @@ class AgentRunner
             $apiKey = $this->getApiKey($projectId);
             $modelConfig = $resolved['model_config'];
             if (!$apiKey || !$modelConfig) {
+                $hint = 'Set a global API key in Settings, or a project key in the Project (API & AI). Ensure the project has a model configured for prompts.';
                 $logger->logError('summary', 'Missing OpenRouter API key or model config for project', [
                     'has_api_key' => (bool) $apiKey,
                     'has_model_config' => (bool) $modelConfig,
                 ]);
                 $step->update(['status' => 'failed', 'logs_text' => 'No API key or model config']);
-                throw new \RuntimeException('Missing OpenRouter API key or model config for project');
+                throw new \RuntimeException('Missing OpenRouter API key or model config for project. ' . $hint);
             }
             $start = microtime(true);
             $logger->logStart('summary', 'Calling AI', ['prompt_key' => $promptKey, 'model' => $modelConfig->model_name]);

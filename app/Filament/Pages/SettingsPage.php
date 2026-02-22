@@ -54,9 +54,19 @@ class SettingsPage extends Page
         $key = $this->openrouter_api_key !== null ? trim($this->openrouter_api_key) : '';
         if ($key !== '') {
             Setting::setValue('openrouter_api_key', $key);
-            $this->keySavedSuccess = true;
-            Notification::make()->title('OpenRouter API key saved.')->success()->send();
-            $this->openrouter_api_key = '';
+            $verified = Setting::getValue('openrouter_api_key');
+            if ($verified !== null && $verified !== '') {
+                $this->keySavedSuccess = true;
+                Notification::make()->title('OpenRouter API key saved.')->success()->send();
+                $this->openrouter_api_key = '';
+            } else {
+                $this->keySavedSuccess = false;
+                Notification::make()
+                    ->title('Key could not be saved or verified.')
+                    ->body('Check that the settings table exists (run migrations) and that APP_KEY has not changed.')
+                    ->danger()
+                    ->send();
+            }
         } else {
             Notification::make()->title('Enter a key to save, or leave blank to keep the current key.')->warning()->send();
         }

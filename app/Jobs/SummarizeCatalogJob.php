@@ -44,7 +44,11 @@ class SummarizeCatalogJob implements ShouldQueue
                 'exception' => get_class($e),
             ]);
             $run->update(['status' => AgentRun::STATUS_FAILED, 'error' => $e->getMessage(), 'finished_at' => now()]);
-            throw $e;
+            // Do not rethrow configuration errors so the request returns 200 and the user sees the run as Failed with a clear message instead of a 500 page
+            $isConfigError = $e instanceof \RuntimeException && str_contains($e->getMessage(), 'Missing OpenRouter API key');
+            if (! $isConfigError) {
+                throw $e;
+            }
         }
     }
 }
