@@ -37,11 +37,29 @@ class PromptRenderer
                 ->first();
         }
 
+        if ($modelConfig === null && $template->default_model_name) {
+            $modelConfig = $this->defaultModelConfigObject($template->default_model_name);
+        }
+
         $text = $this->fill($template->template_text, $variables);
         return [
             'prompt_text' => $text,
             'model_config' => $modelConfig,
         ];
+    }
+
+    /**
+     * Fallback model config when project has no ModelConfig record (uses template default model name).
+     * @return object{model_name: string, temperature: float, max_tokens: int, json_mode: bool}
+     */
+    private function defaultModelConfigObject(string $modelName): object
+    {
+        $config = new \stdClass;
+        $config->model_name = $modelName;
+        $config->temperature = 0.7;
+        $config->max_tokens = 4096;
+        $config->json_mode = true;
+        return $config;
     }
 
     /**

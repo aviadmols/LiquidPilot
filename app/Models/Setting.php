@@ -31,11 +31,11 @@ class Setting extends Model
             // Table missing or schema error; fall through to env
         }
 
-        // Fallback: env/config so the key works even when DB is not available or failed
+        // Fallback: env so the key works at runtime even when config is cached
         if ($key === 'openrouter_api_key') {
-            $envKey = config('services.openrouter.api_key');
-            if ($envKey !== null && $envKey !== '') {
-                return $envKey;
+            $envKey = env('OPENROUTER_API_KEY');
+            if ($envKey !== null && trim((string) $envKey) !== '') {
+                return trim((string) $envKey);
             }
         }
 

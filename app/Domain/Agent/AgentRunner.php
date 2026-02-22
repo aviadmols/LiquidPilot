@@ -73,13 +73,13 @@ class AgentRunner
             $apiKey = $this->getApiKey($projectId);
             $modelConfig = $resolved['model_config'];
             if (!$apiKey || !$modelConfig) {
-                $hint = 'Set a global API key in Settings, or a project key in the Project (API & AI). Ensure the project has a model configured for prompts.';
-                $logger->logError('summary', 'Missing OpenRouter API key or model config for project', [
+                $message = $this->missingConfigMessage($apiKey, $modelConfig);
+                $logger->logError('summary', $message, [
                     'has_api_key' => (bool) $apiKey,
                     'has_model_config' => (bool) $modelConfig,
                 ]);
-                $step->update(['status' => 'failed', 'logs_text' => 'No API key or model config']);
-                throw new \RuntimeException('Missing OpenRouter API key or model config for project. ' . $hint);
+                $step->update(['status' => 'failed', 'logs_text' => $message]);
+                throw new \RuntimeException($message);
             }
             $start = microtime(true);
             $logger->logStart('summary', 'Calling AI', ['prompt_key' => $promptKey, 'model' => $modelConfig->model_name]);
@@ -144,7 +144,7 @@ class AgentRunner
         $apiKey = $this->getApiKey($run->project_id);
         $modelConfig = $resolved['model_config'];
         if (!$apiKey || !$modelConfig) {
-            throw new \RuntimeException('Missing API key or model config');
+            throw new \RuntimeException($this->missingConfigMessage($apiKey, $modelConfig));
         }
         $logger->logStart('plan', 'Calling AI', ['model' => $modelConfig->model_name]);
         $response = $this->openRouterClient->chat($apiKey, $modelConfig->model_name, [
@@ -194,7 +194,7 @@ class AgentRunner
             $apiKey = $this->getApiKey($run->project_id);
             $modelConfig = $resolved['model_config'];
             if (!$apiKey || !$modelConfig) {
-                throw new \RuntimeException('Missing API key or model config');
+                throw new \RuntimeException($this->missingConfigMessage($apiKey, $modelConfig));
             }
             $response = $this->openRouterClient->chat($apiKey, $modelConfig->model_name, [
                 ['role' => 'user', 'content' => $resolved['prompt_text']],
@@ -231,7 +231,7 @@ class AgentRunner
         $resolved = $this->promptRenderer->resolve('JSON_FIX', $run->project_id, ['invalid_json' => $invalidJson]);
         $modelConfig = $resolved['model_config'];
         if (!$modelConfig) {
-            \Illuminate\Support\Facades\Log::warning('AgentRunner: JSON_FIX retry skipped (no model config)');
+            \Illuminate\Support\Facades\Log::warning('AgentRunner: JSON_FIX retry skipped. Project has no model configured for this prompt. Add a model in Project → Model Configs and optionally bind it in Prompt Bindings.');
             return null;
         }
         $response = $this->openRouterClient->chat($apiKey, $modelConfig->model_name, [
@@ -266,5 +266,17 @@ class AgentRunner
             return $key;
         }
         return Setting::getValue('openrouter_api_key');
+    }
+
+    private function missingConfigMessage(?string $apiKey, $modelConfig): string
+    {
+        $parts = [];
+        if (! $apiKey || trim($apiKey ?? '') === '') {
+            $parts[] = 'Missing OpenRouter API key. Set it in Settings (OpenRouter API Key) or set OPENROUTER_API_KEY in .env.';
+        }
+        if (! $modelConfig) {
+            $parts[] = 'Project has no model configured for this prompt. Add a model in Project → Model Configs and optionally bind it in Prompt Bindings, or ensure the template\'s default model exists for this project.';
+        }
+        return implode(' ', $parts);
     }
 }
