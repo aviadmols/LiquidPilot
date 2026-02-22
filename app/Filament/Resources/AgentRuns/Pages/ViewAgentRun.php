@@ -43,6 +43,26 @@ class ViewAgentRun extends ViewRecord
                         ->success()
                         ->send();
                 }),
+            \Filament\Actions\Action::make('stopRun')
+                ->label('Stop run')
+                ->icon('heroicon-o-stop')
+                ->color('danger')
+                ->visible(fn () => $this->getRecord()->status === AgentRun::STATUS_RUNNING)
+                ->requiresConfirmation()
+                ->modalHeading('Stop run')
+                ->modalDescription('This will mark the run as cancelled. The current job may finish but no further steps will run.')
+                ->action(function (): void {
+                    $record = $this->getRecord();
+                    $record->update([
+                        'status' => AgentRun::STATUS_CANCELLED,
+                        'error' => 'Cancelled by user',
+                        'finished_at' => now(),
+                    ]);
+                    \Filament\Notifications\Notification::make()
+                        ->title('Run cancelled')
+                        ->success()
+                        ->send();
+                }),
         ];
         $export = $record->export;
         if ($export) {
@@ -133,6 +153,11 @@ class ViewAgentRun extends ViewRecord
             return Callout::make('Run failed')
                 ->description($msg)
                 ->danger();
+        }
+        if ($record->status === AgentRun::STATUS_CANCELLED) {
+            return Callout::make('Run was cancelled')
+                ->description($record->error ?: 'Cancelled by user.')
+                ->warning();
         }
         return null;
     }

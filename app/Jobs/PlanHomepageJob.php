@@ -23,9 +23,25 @@ class PlanHomepageJob implements ShouldQueue
         Log::info('PlanHomepageJob started', ['agent_run_id' => $this->agentRunId]);
 
         $run = AgentRun::findOrFail($this->agentRunId);
+        $run->refresh();
+        if (in_array($run->status, [AgentRun::STATUS_CANCELLED, AgentRun::STATUS_FAILED], true)) {
+            return;
+        }
         AIProgressLogger::forRun($run->id)->log('plan', 'info', 'Plan step job started', []);
 
         try {
+            if ($run->mode === AgentRun::MODE_TEST && $run->selected_section_handle) {
+                AIProgressLogger::forRun($run->id)->log('plan', 'info', 'Test run: using selected section only (no AI plan)', []);
+                \App\Models\AgentStep::create([
+                    'agent_run_id' => $run->id,
+                    'step_key' => 'plan',
+                    'status' => 'completed',
+                    'output_json' => ['sections' => [$run->selected_section_handle]],
+                ]);
+                ComposeSectionsJob::dispatch($this->agentRunId);
+                return;
+            }
+
             $summaryStep = \App\Models\AgentStep::where('agent_run_id', $run->id)->where('step_key', 'summary')->latest('id')->first();
             $summary = $summaryStep?->output_json ?? [];
             $runner->runPlan($run, $summary);

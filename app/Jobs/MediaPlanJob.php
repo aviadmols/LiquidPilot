@@ -24,6 +24,10 @@ class MediaPlanJob implements ShouldQueue
         Log::info('MediaPlanJob started', ['agent_run_id' => $this->agentRunId]);
 
         $run = AgentRun::findOrFail($this->agentRunId);
+        $run->refresh();
+        if (in_array($run->status, [AgentRun::STATUS_CANCELLED, AgentRun::STATUS_FAILED], true)) {
+            return;
+        }
         AIProgressLogger::forRun($run->id)->log('media_plan', 'info', 'MediaPlan job started', []);
 
         try {

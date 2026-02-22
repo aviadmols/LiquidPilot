@@ -18,6 +18,7 @@ class AgentRun extends Model
     public const STATUS_RUNNING = 'running';
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_FAILED = 'failed';
+    public const STATUS_CANCELLED = 'cancelled';
 
     public const IMAGE_GENERATOR_PLACEHOLDER = 'placeholder';
     public const IMAGE_GENERATOR_NANOBANNA = 'nanobanna';

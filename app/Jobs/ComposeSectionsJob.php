@@ -24,6 +24,10 @@ class ComposeSectionsJob implements ShouldQueue
         Log::info('ComposeSectionsJob started', ['agent_run_id' => $this->agentRunId]);
 
         $run = AgentRun::findOrFail($this->agentRunId);
+        $run->refresh();
+        if (in_array($run->status, [AgentRun::STATUS_CANCELLED, AgentRun::STATUS_FAILED], true)) {
+            return;
+        }
         AIProgressLogger::forRun($run->id)->log('compose', 'info', 'Compose step job started', []);
 
         try {

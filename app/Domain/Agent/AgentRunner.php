@@ -152,7 +152,31 @@ class AgentRunner
         ], ['temperature' => $modelConfig->temperature, 'max_tokens' => $modelConfig->max_tokens, 'json_mode' => true]);
         $logger->logEnd('plan', 'Response received', ['usage' => $response['usage']]);
 
-        $plan = $this->jsonGuard->parseAndValidate($response['content'], [
+        $rawContent = $response['content'];
+        $decoded = $this->jsonGuard->decode($rawContent);
+        if ($decoded !== null && isset($decoded['sections']) && is_array($decoded['sections'])) {
+            $allowedSet = array_flip($handles);
+            $filtered = [];
+            $dropped = [];
+            foreach ($decoded['sections'] as $s) {
+                $h = is_string($s) ? $s : ($s['type'] ?? $s['handle'] ?? null);
+                if ($h !== null && isset($allowedSet[$h])) {
+                    $filtered[] = $h;
+                } elseif ($h !== null) {
+                    $dropped[] = $h;
+                }
+            }
+            if (! empty($dropped)) {
+                $logger->log('plan', 'warning', 'Dropped invalid section handles: ' . implode(', ', array_unique($dropped)), []);
+            }
+            if (empty($filtered)) {
+                throw new \InvalidArgumentException('AI did not return any valid section handles.');
+            }
+            $decoded['sections'] = $filtered;
+            $rawContent = json_encode($decoded);
+        }
+
+        $plan = $this->jsonGuard->parseAndValidate($rawContent, [
             'allowed_section_handles' => $handles,
             'required_keys' => ['sections'],
         ]);

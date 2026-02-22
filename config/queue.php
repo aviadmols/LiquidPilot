@@ -122,7 +122,7 @@ return [
 
     'failed' => [
         'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        'database' => env('DB_CONNECTION', env('DATABASE_URL') ? 'pgsql' : 'sqlite'),
         'table' => 'failed_jobs',
     ],
 

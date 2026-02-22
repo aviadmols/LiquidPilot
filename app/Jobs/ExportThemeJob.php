@@ -28,6 +28,10 @@ class ExportThemeJob implements ShouldQueue
         Log::info('ExportThemeJob started', ['agent_run_id' => $this->agentRunId]);
 
         $run = AgentRun::findOrFail($this->agentRunId);
+        $run->refresh();
+        if (in_array($run->status, [AgentRun::STATUS_CANCELLED, AgentRun::STATUS_FAILED], true)) {
+            return;
+        }
         AIProgressLogger::forRun($run->id)->log('export', 'info', 'ExportTheme job started', []);
 
         try {
