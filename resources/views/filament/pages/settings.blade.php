@@ -14,12 +14,14 @@
                 @else
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">No key stored yet. Enter your key below and click Save.</p>
                 @endif
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Text field so the value is saved reliably. You can clear it after saving.</p>
                 <div class="max-w-md">
-                    <input type="password"
-                           wire:model="openrouter_api_key"
+                    <input type="text"
+                           wire:model.live="openrouter_api_key"
                            placeholder="Enter your API key (leave blank to keep current)"
-                           class="fi-input block w-full rounded-lg border-gray-300 dark:border-white/20 dark:bg-white/5 px-3 py-2 text-sm text-gray-950 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400"
-                           autocomplete="off" />
+                           class="fi-input block w-full rounded-lg border border-gray-300 dark:border-white/20 dark:bg-white/5 px-3 py-2 text-sm text-gray-950 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400"
+                           autocomplete="off"
+                           spellcheck="false" />
                 </div>
                 <div class="mt-4">
                     <button type="submit"
