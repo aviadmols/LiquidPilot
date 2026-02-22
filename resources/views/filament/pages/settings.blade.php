@@ -6,8 +6,13 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Set a global API key for OpenRouter. It will be used when a project does not have its own key. Get your key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener" class="text-primary-600 dark:text-primary-400 underline">openrouter.ai/keys</a>.
                 </p>
+                @if($this->keySavedSuccess)
+                    <p class="text-sm font-medium text-green-600 dark:text-green-400 mb-2">✓ Key saved successfully and stored. The field is cleared for security; the key is still in use.</p>
+                @endif
                 @if($this->hasOpenRouterKey())
-                    <p class="text-sm text-success-600 dark:text-success-400 mb-2">A key is configured. Enter a new value below to change it.</p>
+                    <p class="text-sm text-success-600 dark:text-success-400 mb-2">✓ A key is stored. Enter a new value below to replace it.</p>
+                @else
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">No key stored yet. Enter your key below and click Save.</p>
                 @endif
                 <div class="max-w-md">
                     <input type="password"

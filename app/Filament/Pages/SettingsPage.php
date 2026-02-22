@@ -22,6 +22,8 @@ class SettingsPage extends Page
 
     public ?string $openrouter_api_key = null;
 
+    public bool $keySavedSuccess = false;
+
     public function mount(): void
     {
         $this->openrouter_api_key = '';
@@ -52,6 +54,7 @@ class SettingsPage extends Page
         $key = $this->openrouter_api_key !== null ? trim($this->openrouter_api_key) : '';
         if ($key !== '') {
             Setting::setValue('openrouter_api_key', $key);
+            $this->keySavedSuccess = true;
             Notification::make()->title('OpenRouter API key saved.')->success()->send();
             $this->openrouter_api_key = '';
         } else {
