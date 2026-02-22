@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -21,7 +22,9 @@ class EditAgentRun extends EditRecord
     {
         $base = parent::form($schema);
         $record = $this->getRecord();
+        $statusHint = $this->getStatusHintCallout($record);
         $components = array_merge(
+            $statusHint ? [$statusHint] : [],
             $base->getComponents(),
             [
                 Section::make('AI Live Logs')
@@ -45,7 +48,7 @@ class EditAgentRun extends EditRecord
                 ->label('Run again')
                 ->icon('heroicon-o-arrow-path')
                 ->color('primary')
-                ->visible(fn () => $record->status !== AgentRun::STATUS_RUNNING)
+                ->visible(fn () => $this->getRecord()->status !== AgentRun::STATUS_RUNNING)
                 ->requiresConfirmation()
                 ->modalHeading('Run agent again')
                 ->modalDescription('This will re-run the full pipeline (summary → plan → compose) from the start. The run will be queued; you will be taken to the View page where you can follow progress in "AI Live Logs".')
@@ -67,5 +70,23 @@ class EditAgentRun extends EditRecord
             DeleteAction::make(),
         ];
         return $actions;
+    }
+
+    private function getStatusHintCallout(AgentRun $record): ?Callout
+    {
+        if ($record->status === AgentRun::STATUS_PENDING) {
+            return Callout::make('Run is queued (Pending)')
+                ->description('If the run never starts, the queue worker is probably not running. On the server run: php artisan queue:work. Check the "AI Live Logs" section below.')
+                ->warning();
+        }
+        if ($record->status === AgentRun::STATUS_FAILED) {
+            $msg = $record->error
+                ? 'Error: ' . $record->error
+                : 'Run failed but no error was saved. Check "AI Live Logs" below and storage/logs/laravel.log on the server.';
+            return Callout::make('Run failed')
+                ->description($msg)
+                ->danger();
+        }
+        return null;
     }
 }
