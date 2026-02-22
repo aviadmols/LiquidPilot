@@ -78,12 +78,14 @@ class ViewAgentRun extends ViewRecord
             $this->hasInfolist()
                 ? $this->getInfolistContentComponent()
                 : $this->getFormContentComponent(),
-            $this->getRelationManagersContentComponent(),
             Section::make('AI Live Logs')
+                ->description('Logs from the agent pipeline (summary, plan, compose). Use these to debug why a run is stuck or failed.')
                 ->schema([
                     Livewire::make(\App\Livewire\AiLogsList::class, ['agentRunId' => $record->id]),
                 ])
-                ->collapsible(),
+                ->collapsible()
+                ->collapsed(false),
+            $this->getRelationManagersContentComponent(),
         ];
         return $schema->components($components);
     }
