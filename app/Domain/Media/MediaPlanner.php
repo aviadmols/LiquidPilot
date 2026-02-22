@@ -32,7 +32,10 @@ class MediaPlanner
             }
             $settings = $section['settings'] ?? [];
             foreach ($settings as $settingId => $value) {
-                if (is_string($value) && (str_starts_with($value, 'http') || strlen($value) > 0)) {
+                if (! is_string($value) || $value === '') {
+                    continue;
+                }
+                if (str_starts_with($value, 'http') || $this->looksLikeImageSetting($settingId)) {
                     $required[] = [
                         'purpose' => $sectionId . '_' . $settingId,
                         'width' => 1200,
@@ -52,6 +55,18 @@ class MediaPlanner
         ], $required);
         $this->writeManifest($extractedPath, $manifest);
         return $required;
+    }
+
+    private function looksLikeImageSetting(string $settingId): bool
+    {
+        $id = strtolower($settingId);
+        $keywords = ['image', 'logo', 'picture', 'photo', 'banner', 'background', 'icon', 'media'];
+        foreach ($keywords as $kw) {
+            if (str_contains($id, $kw)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function writeManifest(string $extractedPath, array $manifest): void

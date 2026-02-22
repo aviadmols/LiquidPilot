@@ -231,7 +231,7 @@ class AgentRunner
             $validated = $sectionPayload !== null
                 ? $this->sectionSchemaValidator->validate($schema, $sectionPayload)
                 : ['settings' => [], 'blocks' => [], 'block_order' => []];
-            $id = 'section_' . ($i + 1);
+            $id = $this->sectionIdForIndex($handle, $built['sections']);
             $built['sections'][$id] = [
                 'type' => $handle,
                 'settings' => $validated['settings'],
@@ -290,6 +290,24 @@ class AgentRunner
             return $key;
         }
         return Setting::getValue('openrouter_api_key');
+    }
+
+    /**
+     * Section ID for index.json compatible with Shopify (e.g. image_banner, rich_text).
+     * Uses section handle; if duplicate, appends _2, _3, etc.
+     */
+    private function sectionIdForIndex(string $handle, array $existingSections): string
+    {
+        $base = preg_replace('/[^a-z0-9_]/i', '_', $handle);
+        $base = trim($base, '_') ?: 'section';
+        if (! isset($existingSections[$base])) {
+            return $base;
+        }
+        $n = 2;
+        while (isset($existingSections[$base . '_' . $n])) {
+            $n++;
+        }
+        return $base . '_' . $n;
     }
 
     private function missingConfigMessage(?string $apiKey, $modelConfig): string

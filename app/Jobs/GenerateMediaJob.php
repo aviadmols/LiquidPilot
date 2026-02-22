@@ -57,35 +57,42 @@ class GenerateMediaJob implements ShouldQueue
 
             $generatedRelPaths = [];
             $assetsDir = $extractedPath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'generated';
+            $safePurposeBase = fn (string $p) => preg_replace('/[^a-zA-Z0-9_\-]/', '_', $p) ?: 'asset';
 
             foreach ($required as $i => $asset) {
                 $purpose = $asset['purpose'] ?? 'asset_' . $i;
                 $width = $asset['width'] ?? 1200;
                 $height = $asset['height'] ?? 800;
                 $label = $imageryVibe ? $purpose . ' – ' . $imageryVibe : $purpose;
-                $filename = $purpose . '.png';
+                $filenameBase = $safePurposeBase($purpose);
 
                 if ($i < $maxGenerate) {
-                    $relPath = $generator->generate($extractedPath, $filename, $width, $height, $colors, $label);
-                    $generatedRelPaths[] = str_replace('\\', '/', $relPath);
+                    $relPath = str_replace('\\', '/', $generator->generate($extractedPath, $filenameBase . '.png', $width, $height, $colors, $label));
+                    $generatedRelPaths[] = $relPath;
+                    $actualFilename = basename($relPath);
+                    $ext = pathinfo($relPath, PATHINFO_EXTENSION) ?: 'png';
                 } else {
                     $reuseIndex = $i % $maxGenerate;
                     $sourceRelPath = $generatedRelPaths[$reuseIndex];
                     $sourceFull = $extractedPath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $sourceRelPath);
-                    $destFull = $assetsDir . DIRECTORY_SEPARATOR . $filename;
+                    $ext = pathinfo($sourceRelPath, PATHINFO_EXTENSION) ?: 'png';
+                    $actualFilename = $filenameBase . '.' . $ext;
+                    $destFull = $assetsDir . DIRECTORY_SEPARATOR . $actualFilename;
                     if (is_file($sourceFull)) {
                         @copy($sourceFull, $destFull);
                     }
-                    $relPath = 'assets/generated/' . $filename;
+                    $relPath = 'assets/generated/' . $actualFilename;
                 }
+
+                $mime = $this->mimeForExtension($ext ?? 'png');
 
                 MediaAsset::create([
                     'agent_run_id' => $run->id,
-                    'filename' => $filename,
+                    'filename' => $actualFilename ?? $filenameBase . '.png',
                     'rel_path' => $relPath,
                     'width' => $width,
                     'height' => $height,
-                    'mime' => 'image/png',
+                    'mime' => $mime,
                     'purpose' => $purpose,
                     'status' => 'ready',
                 ]);
@@ -105,6 +112,17 @@ class GenerateMediaJob implements ShouldQueue
             $run->update(['status' => AgentRun::STATUS_FAILED, 'error' => $e->getMessage(), 'finished_at' => now()]);
             throw $e;
         }
+    }
+
+    private function mimeForExtension(string $ext): string
+    {
+        return match (strtolower($ext)) {
+            'svg' => 'image/svg+xml',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
     }
 
     private function imageryStyleLabel(?BrandKit $brand): string

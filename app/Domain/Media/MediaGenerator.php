@@ -26,6 +26,7 @@ class MediaGenerator
         array $colors = [],
         ?string $label = null
     ): string {
+        $filename = $this->sanitizeFilename($filename);
         $themeRootPath = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $themeRootPath), DIRECTORY_SEPARATOR);
         $outDir = $themeRootPath . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'generated';
         if (!is_dir($outDir)) {
@@ -84,7 +85,10 @@ class MediaGenerator
             }
         }
         $path = $outDir . DIRECTORY_SEPARATOR . $filename;
-        imagepng($img, $path);
+        if (!imagepng($img, $path)) {
+            imagedestroy($img);
+            throw new \RuntimeException('GD imagepng failed to write: ' . $path);
+        }
         imagedestroy($img);
         return $path;
     }
@@ -145,6 +149,13 @@ SVG;
             (int) hexdec(substr($hex, 2, 2)),
             (int) hexdec(substr($hex, 4, 2)),
         ];
+    }
+
+    private function sanitizeFilename(string $filename): string
+    {
+        $filename = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $filename);
+        $filename = preg_replace('/_+/', '_', trim($filename, '_'));
+        return $filename !== '' ? $filename : 'placeholder.png';
     }
 
     private function relativePath(string $fullPath, string $themeRoot): string
