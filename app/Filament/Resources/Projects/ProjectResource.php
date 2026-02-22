@@ -108,7 +108,7 @@ class ProjectResource extends Resource
                             'max_images_per_run' => isset($data['max_images_per_run']) && $data['max_images_per_run'] !== '' ? (int) $data['max_images_per_run'] : null,
                             'status' => \App\Models\AgentRun::STATUS_PENDING,
                         ]);
-                        \App\Jobs\SummarizeCatalogJob::dispatch($run->id);
+                        \App\Jobs\SummarizeCatalogJob::dispatch($run->id)->onConnection('database');
                         Notification::make()->title('Agent run started')->success()->send();
                         return redirect(\App\Filament\Resources\AgentRuns\AgentRunResource::getUrl('view', ['record' => $run]));
                     }),
@@ -173,7 +173,7 @@ class ProjectResource extends Resource
                             'max_images_per_run' => isset($data['max_images_per_run']) && $data['max_images_per_run'] !== '' ? (int) $data['max_images_per_run'] : null,
                             'status' => \App\Models\AgentRun::STATUS_PENDING,
                         ]);
-                        \App\Jobs\SummarizeCatalogJob::dispatch($run->id);
+                        \App\Jobs\SummarizeCatalogJob::dispatch($run->id)->onConnection('database');
                         Notification::make()->title('Test run started')->success()->send();
                         return redirect(\App\Filament\Resources\AgentRuns\AgentRunResource::getUrl('view', ['record' => $run]));
                     }),

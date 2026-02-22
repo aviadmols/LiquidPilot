@@ -36,7 +36,7 @@ class ViewAgentRun extends ViewRecord
                         'error' => null,
                         'progress' => 0,
                     ]);
-                    \App\Jobs\SummarizeCatalogJob::dispatch($record->id);
+                    \App\Jobs\SummarizeCatalogJob::dispatch($record->id)->onConnection('database');
                     \Filament\Notifications\Notification::make()
                         ->title('Run queued')
                         ->body('Watch the "AI Live Logs" section below.')
@@ -123,7 +123,7 @@ class ViewAgentRun extends ViewRecord
     {
         if ($record->status === AgentRun::STATUS_PENDING) {
             return Callout::make('Run is queued (Pending)')
-                ->description('If the run never starts, the queue worker is probably not running. On the server run: php artisan queue:work. Then check the "AI Live Logs" section below to see what the agent is doing.')
+                ->description('If the run never starts, the queue worker is probably not running. On the server run: php artisan queue:work database. Then check the "AI Live Logs" section below to see what the agent is doing.')
                 ->warning();
         }
         if ($record->status === AgentRun::STATUS_FAILED) {

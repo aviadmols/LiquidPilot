@@ -51,7 +51,7 @@ class CreateAgentRun extends CreateRecord
 
     protected function afterCreate(): void
     {
-        SummarizeCatalogJob::dispatch($this->record->id);
+        SummarizeCatalogJob::dispatch($this->record->id)->onConnection('database');
         Notification::make()
             ->title('Agent run started')
             ->body('You can follow each step below and edit or re-run from any step.')

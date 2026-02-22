@@ -84,9 +84,9 @@ class AgentStepsRelationManager extends RelationManager
                         }
                         $run->update(['status' => AgentRun::STATUS_RUNNING, 'error' => null]);
                         match ($record->step_key) {
-                            'summary' => SummarizeCatalogJob::dispatch($run->id),
-                            'plan' => PlanHomepageJob::dispatch($run->id),
-                            'compose' => ComposeSectionsJob::dispatch($run->id),
+                            'summary' => SummarizeCatalogJob::dispatch($run->id)->onConnection('database'),
+                            'plan' => PlanHomepageJob::dispatch($run->id)->onConnection('database'),
+                            'compose' => ComposeSectionsJob::dispatch($run->id)->onConnection('database'),
                             default => null,
                         };
                         Notification::make()->title('Re-run has been queued')->success()->send();

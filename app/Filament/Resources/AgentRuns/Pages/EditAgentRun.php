@@ -59,7 +59,7 @@ class EditAgentRun extends EditRecord
                         'error' => null,
                         'progress' => 0,
                     ]);
-                    SummarizeCatalogJob::dispatch($record->id);
+                    SummarizeCatalogJob::dispatch($record->id)->onConnection('database');
                     Notification::make()
                         ->title('Run queued')
                         ->body('You will be taken to the View page. Open the "AI Live Logs" section to see what the agent is doing.')
@@ -76,7 +76,7 @@ class EditAgentRun extends EditRecord
     {
         if ($record->status === AgentRun::STATUS_PENDING) {
             return Callout::make('Run is queued (Pending)')
-                ->description('If the run never starts, the queue worker is probably not running. On the server run: php artisan queue:work. Check the "AI Live Logs" section below.')
+                ->description('If the run never starts, the queue worker is probably not running. On the server run: php artisan queue:work database. Check the "AI Live Logs" section below.')
                 ->warning();
         }
         if ($record->status === AgentRun::STATUS_FAILED) {
