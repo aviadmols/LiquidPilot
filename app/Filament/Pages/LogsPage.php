@@ -21,7 +21,7 @@ class LogsPage extends Page
 
     protected static ?string $slug = 'logs';
 
-    protected static string $view = 'filament.pages.logs';
+    protected string $view = 'filament.pages.logs';
 
     public function getHeading(): string
     {
