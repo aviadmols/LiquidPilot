@@ -64,6 +64,19 @@ class ViewAgentRun extends ViewRecord
                         ->send();
                 }),
         ];
+        $composeStep = $record->agentSteps()->where('step_key', 'compose')->latest('id')->first();
+        $hasComposeOutput = $composeStep && !empty($composeStep->output_json);
+        if ($hasComposeOutput) {
+            $actions[] = \Filament\Actions\Action::make('previewTemplate')
+                ->label('Preview template')
+                ->icon('heroicon-o-eye')
+                ->url(fn () => route('admin.template-preview', ['run' => $record->id]))
+                ->openUrlInNewTab();
+            $actions[] = \Filament\Actions\Action::make('previewAndEdit')
+                ->label('Preview & Edit')
+                ->icon('heroicon-o-pencil-square')
+                ->url(fn () => route('admin.template-editor', ['run' => $record->id]));
+        }
         $export = $record->export;
         if ($export) {
             if ($export->zip_path && $this->isSafeExportPath($export->zip_path)) {
