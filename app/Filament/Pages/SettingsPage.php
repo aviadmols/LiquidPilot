@@ -51,24 +51,36 @@ class SettingsPage extends Page
 
     public function saveOpenRouterKey(): void
     {
-        $key = $this->openrouter_api_key !== null ? trim($this->openrouter_api_key) : '';
-        if ($key !== '') {
-            Setting::setValue('openrouter_api_key', $key);
-            $verified = Setting::getValue('openrouter_api_key');
-            if ($verified !== null && $verified !== '') {
-                $this->keySavedSuccess = true;
-                Notification::make()->title('OpenRouter API key saved.')->success()->send();
-                $this->openrouter_api_key = '';
-            } else {
-                $this->keySavedSuccess = false;
-                Notification::make()
-                    ->title('Key could not be saved or verified.')
-                    ->body('Check that the settings table exists (run migrations) and that APP_KEY has not changed.')
-                    ->danger()
-                    ->send();
-            }
-        } else {
+        $key = $this->openrouter_api_key !== null ? trim((string) $this->openrouter_api_key) : '';
+        if ($key === '') {
             Notification::make()->title('Enter a key to save, or leave blank to keep the current key.')->warning()->send();
+            return;
+        }
+
+        try {
+            Setting::setValue('openrouter_api_key', $key);
+        } catch (\Throwable $e) {
+            $this->keySavedSuccess = false;
+            Notification::make()
+                ->title('Could not save key')
+                ->body($e->getMessage() . ' Alternatively set OPENROUTER_API_KEY in your .env or server environment.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $verified = Setting::getValue('openrouter_api_key');
+        if ($verified !== null && $verified !== '') {
+            $this->keySavedSuccess = true;
+            Notification::make()->title('OpenRouter API key saved.')->success()->send();
+            $this->openrouter_api_key = '';
+        } else {
+            $this->keySavedSuccess = false;
+            Notification::make()
+                ->title('Key could not be verified after save.')
+                ->body('The key was written but could not be read back. Set OPENROUTER_API_KEY in .env or server environment as a fallback.')
+                ->danger()
+                ->send();
         }
     }
 }

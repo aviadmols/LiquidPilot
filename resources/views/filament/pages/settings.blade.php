@@ -14,7 +14,7 @@
                 @else
                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">No key stored yet. Enter your key below and click Save.</p>
                 @endif
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Text field so the value is saved reliably. You can clear it after saving.</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Save here, or set <code class="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">OPENROUTER_API_KEY</code> in .env / server environment; the app will use either.</p>
                 <div class="max-w-md">
                     <input type="text"
                            wire:model.live="openrouter_api_key"
